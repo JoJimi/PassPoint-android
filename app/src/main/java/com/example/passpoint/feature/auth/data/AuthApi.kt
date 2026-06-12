@@ -1,7 +1,7 @@
-package com.example.passpoint.data.api
+package com.example.passpoint.feature.auth.data
 
-import com.example.passpoint.data.dto.request.LoginRequest
-import com.example.passpoint.data.dto.response.LoginResponse
+import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
+import com.example.passpoint.feature.auth.data.dto.response.LoginResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 

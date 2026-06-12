@@ -1,4 +1,4 @@
-package com.example.passpoint.ui.login
+package com.example.passpoint.feature.auth.ui
 
 /**
  * 로그인 화면의 상태

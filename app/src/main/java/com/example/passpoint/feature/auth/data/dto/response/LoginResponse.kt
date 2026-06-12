@@ -1,4 +1,4 @@
-package com.example.passpoint.data.dto.response
+package com.example.passpoint.feature.auth.data.dto.response
 
 /**
  * 소셜 로그인 응답 바디

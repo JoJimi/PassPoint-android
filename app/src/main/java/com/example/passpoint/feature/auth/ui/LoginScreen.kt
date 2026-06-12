@@ -1,4 +1,4 @@
-package com.example.passpoint.ui.login
+package com.example.passpoint.feature.auth.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

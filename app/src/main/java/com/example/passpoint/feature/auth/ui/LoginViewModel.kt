@@ -1,4 +1,4 @@
-package com.example.passpoint.ui.login
+package com.example.passpoint.feature.auth.ui
 
 import android.app.Activity
 import android.content.Context
@@ -10,8 +10,9 @@ import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.passpoint.BuildConfig
-import com.example.passpoint.data.api.RetrofitClient
-import com.example.passpoint.data.dto.request.LoginRequest
+import com.example.passpoint.core.local.TokenManager
+import com.example.passpoint.core.network.RetrofitClient
+import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +43,12 @@ class LoginViewModel : ViewModel() {
                     LoginRequest(idToken = idToken)
                 )
 
-                // 3) (다음 단계) 받은 tokens 저장 - 지금은 로그로만 확인
+                // 3) 받은 tokens 저장 (DataStore에 영구 저장)
+                TokenManager(context).saveTokens(
+                    accessToken = tokens.accessToken,
+                    refreshToken = tokens.refreshToken
+                )
+
                 Log.d("LoginViewModel", "로그인 성공! accessToken = ${tokens.accessToken}")
 
                 _uiState.value = LoginUiState.Success

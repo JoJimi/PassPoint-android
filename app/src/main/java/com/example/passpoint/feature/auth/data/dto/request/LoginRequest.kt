@@ -1,4 +1,4 @@
-package com.example.passpoint.data.dto.request
+package com.example.passpoint.feature.auth.data.dto.request
 
 /**
  * 소셜 로그인 요청 바디

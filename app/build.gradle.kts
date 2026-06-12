@@ -99,6 +99,12 @@ dependencies {
     // HTTP 통신 로그 보기 (디버깅용)
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+    // 토큰 저장 (DataStore - EncryptedSharedPreferences 대체)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // 화면 이동 (Navigation Compose)
+    implementation("androidx.navigation:navigation-compose:2.8.5")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
