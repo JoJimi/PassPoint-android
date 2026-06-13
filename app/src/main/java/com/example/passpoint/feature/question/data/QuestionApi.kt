@@ -11,13 +11,14 @@ interface QuestionApi {
 
     /**
      * 질문 검색
-     * GET /api/v1/questions?keyword=...&category=...&page=0&size=20
+     * GET /api/v1/questions?keyword=...&category=...&sort=createdAt,desc&page=0&size=20
      * 응답이 Spring Page<>라 PageResponse로 감싸서 받는다.
      */
     @GET("api/v1/questions")
     suspend fun search(
         @Query("keyword") keyword: String?,
         @Query("category") category: String?,
+        @Query("sort") sort: String? = null,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
     ): PageResponse<QuestionSearchResponse>

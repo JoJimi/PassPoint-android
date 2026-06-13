@@ -4,10 +4,16 @@ import android.content.Context
 import com.example.passpoint.BuildConfig
 import com.example.passpoint.core.local.TokenManager
 import com.example.passpoint.feature.auth.data.AuthApi
+import com.example.passpoint.feature.auth.data.dto.request.RefreshRequest
 import com.example.passpoint.feature.question.data.QuestionApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.runBlocking
+import okhttp3.Authenticator
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -26,6 +32,11 @@ object RetrofitClient {
     fun init(context: Context) {
         tokenManager = TokenManager(context.applicationContext)
     }
+
+    // refreshToken마저 만료/무효해서 토큰을 비웠을 때 알리는 이벤트.
+    // AppNavHost에서 이걸 구독해 로그인 화면으로 이동시킨다.
+    private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val sessionExpired: SharedFlow<Unit> = _sessionExpired.asSharedFlow()
 
     // 통신 내용을 Logcat에 찍어주는 인터셉터 (디버깅용)
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -50,9 +61,46 @@ object RetrofitClient {
         chain.proceed(request)
     }
 
+    /**
+     * accessToken이 만료되어 401이 오면, refreshToken으로 재발급받아 같은 요청을 재시도한다.
+     * refreshToken마저 없거나 재발급에 실패하면 토큰을 비우고 더 이상 재시도하지 않는다 (재로그인 필요).
+     */
+    private val tokenAuthenticator = Authenticator { _, response ->
+        if (responseCount(response) >= 2) return@Authenticator null
+
+        val refreshToken = runBlocking { tokenManager.getRefreshToken() }
+            ?: return@Authenticator null
+
+        runBlocking {
+            try {
+                val newTokens = refreshApi.refresh(RefreshRequest(refreshToken))
+                tokenManager.saveTokens(newTokens.accessToken, newTokens.refreshToken)
+                response.request.newBuilder()
+                    .header("Authorization", "Bearer ${newTokens.accessToken}")
+                    .build()
+            } catch (_: Exception) {
+                tokenManager.clearTokens()
+                _sessionExpired.tryEmit(Unit)
+                null
+            }
+        }
+    }
+
+    // 같은 요청에서 재발급 재시도가 또 401을 맞으면(무한루프 방지) 더 이상 시도하지 않는다.
+    private fun responseCount(response: Response): Int {
+        var result = 1
+        var priorResponse = response.priorResponse
+        while (priorResponse != null) {
+            result++
+            priorResponse = priorResponse.priorResponse
+        }
+        return result
+    }
+
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)       // ① 토큰 헤더 먼저 붙이고
         .addInterceptor(loggingInterceptor)    // ② 그다음 통신 내용 로깅
+        .authenticator(tokenAuthenticator)     // ③ 401이면 토큰 재발급 후 재시도
         .connectTimeout(30, TimeUnit.SECONDS)  // 연결 대기 30초
         .readTimeout(30, TimeUnit.SECONDS)     // 응답 대기 30초
         .build()
@@ -62,6 +110,16 @@ object RetrofitClient {
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+
+    // 토큰 재발급 전용 클라이언트. authInterceptor/authenticator를 타지 않아
+    // 재발급 요청 자체가 401을 맞아 무한루프에 빠지는 것을 막는다.
+    private val refreshRetrofit = Retrofit.Builder()
+        .baseUrl(BuildConfig.BASE_URL)
+        .client(OkHttpClient.Builder().addInterceptor(loggingInterceptor).build())
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    private val refreshApi: AuthApi = refreshRetrofit.create(AuthApi::class.java)
 
     // API 설계도 → 실제 동작하는 구현체
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)

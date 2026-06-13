@@ -1,11 +1,13 @@
 package com.example.passpoint.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.passpoint.core.network.RetrofitClient
 import com.example.passpoint.feature.auth.ui.LoginScreen
 import com.example.passpoint.feature.home.ui.HomeScreen
 import com.example.passpoint.feature.question.ui.QuestionListScreen
@@ -14,6 +16,15 @@ import com.example.passpoint.feature.question.ui.QuestionListScreen
 fun AppNavHost() {
     // 운전대: 화면 이동을 명령하는 객체
     val navController = rememberNavController()
+
+    // 토큰 재발급도 실패해서 세션이 끊겼을 때, 어느 화면에 있었든 로그인 화면으로 보낸다.
+    LaunchedEffect(Unit) {
+        RetrofitClient.sessionExpired.collect {
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(navController.graph.id) { inclusive = true }
+            }
+        }
+    }
 
     // 액자: 현재 주소에 맞는 화면을 이 자리에 그린다.
     NavHost(

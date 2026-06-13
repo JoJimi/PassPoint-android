@@ -1,7 +1,8 @@
 package com.example.passpoint.feature.auth.data
 
 import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
-import com.example.passpoint.feature.auth.data.dto.response.LoginResponse
+import com.example.passpoint.feature.auth.data.dto.request.RefreshRequest
+import com.example.passpoint.feature.auth.data.dto.response.TokenResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -14,5 +15,15 @@ interface AuthApi {
     @POST("api/v1/auth/login/google")
     suspend fun loginWithGoogle(
         @Body request: LoginRequest
-    ): LoginResponse
+    ): TokenResponse
+
+    /**
+     * 토큰 재발급
+     * POST /api/v1/auth/refresh
+     * refreshToken을 보내면 새 accessToken/refreshToken을 발급한다.
+     */
+    @POST("api/v1/auth/refresh")
+    suspend fun refresh(
+        @Body request: RefreshRequest
+    ): TokenResponse
 }

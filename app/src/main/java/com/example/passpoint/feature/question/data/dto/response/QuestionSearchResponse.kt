@@ -6,5 +6,6 @@ data class QuestionSearchResponse(
     val mainCategory: String,
     val subCategory: String,
     val difficulty: String,
-    val tags: List<String>
+    val tags: List<String>,
+    val createdAt: String
 )

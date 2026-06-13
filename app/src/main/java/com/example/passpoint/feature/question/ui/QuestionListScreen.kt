@@ -56,6 +56,8 @@ fun QuestionListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedCategory by remember { mutableStateOf("전체") }
+    var selectedCategoryValue by remember { mutableStateOf<String?>(null) }
+    var selectedSort by remember { mutableStateOf(SortOption.default) }
 
     Column(
         modifier = Modifier
@@ -82,7 +84,8 @@ fun QuestionListScreen(
                     selected = label == selectedCategory,
                     onClick = {
                         selectedCategory = label
-                        viewModel.search(category = value)
+                        selectedCategoryValue = value
+                        viewModel.search(category = value, sort = selectedSort.value)
                     }
                 )
             }
@@ -103,13 +106,27 @@ fun QuestionListScreen(
                 }
             }
             is QuestionListUiState.Success -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("전체 ", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                    Text(
-                        "${state.totalCount}개",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PassPurple
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("전체 ", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            "${state.totalCount}개",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PassPurple
+                        )
+                    }
+
+                    SortDropdown(
+                        selected = selectedSort,
+                        onSelect = { option ->
+                            selectedSort = option
+                            viewModel.search(category = selectedCategoryValue, sort = option.value)
+                        }
                     )
                 }
                 Spacer(Modifier.height(12.dp))
@@ -163,6 +180,45 @@ fun QuestionListScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+// 정렬 선택 드롭다운 (최신순 / 오래된순)
+@Composable
+private fun SortDropdown(
+    selected: SortOption,
+    onSelect: (SortOption) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White)
+                .clickable { expanded = true }
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(selected.label, fontSize = 13.sp, color = Color(0xFF6B6B76))
+            Spacer(Modifier.width(4.dp))
+            Text("▾", fontSize = 12.sp, color = Color(0xFF6B6B76))
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            SortOption.values().forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.label) },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    }
+                )
             }
         }
     }

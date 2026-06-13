@@ -21,10 +21,11 @@ class QuestionRepository {
     suspend fun search(
         keyword: String?,
         category: String?,
+        sort: String? = null,
         page: Int,
         size: Int = 20
     ): PageResponse<QuestionSearchResponse> {
-        return questionApi.search(keyword, category, page, size)
+        return questionApi.search(keyword, category, sort, page, size)
     }
 
     /**

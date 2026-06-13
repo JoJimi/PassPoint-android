@@ -19,11 +19,13 @@ class QuestionListViewModel : ViewModel() {
     // 현재 검색 조건 (페이징 동안 유지)
     private var currentKeyword: String? = null
     private var currentCategory: String? = null
+    private var currentSort: String? = SortOption.default.value
 
     // 페이징 상태
     private var currentPage = 0
     private var isLastPage = false
     private var isLoading = false          // 중복 요청 방지
+    private var totalCount: Long = 0       // 전체 개수 (loadNextPage에서도 유지)
 
     // 지금까지 쌓인 목록
     private val loadedQuestions = mutableListOf<QuestionSearchResponse>()
@@ -33,12 +35,13 @@ class QuestionListViewModel : ViewModel() {
     }
 
     /**
-     * 검색 조건이 바뀌었을 때 (칩 변경, 키워드 검색).
+     * 검색 조건이 바뀌었을 때 (칩 변경, 키워드 검색, 정렬 변경).
      * page 0부터 완전히 새로 시작한다.
      */
-    fun search(keyword: String? = null, category: String? = null) {
+    fun search(keyword: String? = null, category: String? = null, sort: String? = currentSort) {
         currentKeyword = keyword
         currentCategory = category
+        currentSort = sort
         loadFirstPage()
     }
 
@@ -57,13 +60,15 @@ class QuestionListViewModel : ViewModel() {
                 val pageData = repository.search(
                     keyword = currentKeyword,
                     category = currentCategory,
+                    sort = currentSort,
                     page = 0
                 )
                 loadedQuestions.addAll(pageData.content)
                 isLastPage = pageData.last
+                totalCount = pageData.totalElements
                 _uiState.value = QuestionListUiState.Success(
                     questions = loadedQuestions.toList(),
-                    totalCount = pageData.totalElements,
+                    totalCount = totalCount,
                     isLastPage = isLastPage
                 )
             } catch (e: Exception) {
@@ -86,6 +91,7 @@ class QuestionListViewModel : ViewModel() {
             // 기존 목록 유지하면서 "더 불러오는 중" 표시
             _uiState.value = QuestionListUiState.Success(
                 questions = loadedQuestions.toList(),
+                totalCount = totalCount,
                 isLoadingMore = true,
                 isLastPage = isLastPage
             )
@@ -94,13 +100,16 @@ class QuestionListViewModel : ViewModel() {
                 val pageData = repository.search(
                     keyword = currentKeyword,
                     category = currentCategory,
+                    sort = currentSort,
                     page = nextPage
                 )
                 loadedQuestions.addAll(pageData.content)
                 currentPage = nextPage
                 isLastPage = pageData.last
+                totalCount = pageData.totalElements
                 _uiState.value = QuestionListUiState.Success(
                     questions = loadedQuestions.toList(),
+                    totalCount = totalCount,
                     isLoadingMore = false,
                     isLastPage = isLastPage
                 )
@@ -108,6 +117,7 @@ class QuestionListViewModel : ViewModel() {
                 // 다음 페이지 실패는 기존 목록 유지 + 로딩만 끔
                 _uiState.value = QuestionListUiState.Success(
                     questions = loadedQuestions.toList(),
+                    totalCount = totalCount,
                     isLoadingMore = false,
                     isLastPage = isLastPage
                 )

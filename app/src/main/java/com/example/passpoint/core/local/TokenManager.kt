@@ -37,6 +37,10 @@ class TokenManager(private val context: Context) {
     suspend fun getAccessToken(): String? =
         context.dataStore.data.first()[ACCESS_TOKEN]
 
+    // 한 번만 꺼내 쓰기 (Authenticator에서 토큰 재발급할 때)
+    suspend fun getRefreshToken(): String? =
+        context.dataStore.data.first()[REFRESH_TOKEN]
+
     // 삭제 (로그아웃 시)
     suspend fun clearTokens() {
         context.dataStore.edit { it.clear() }
