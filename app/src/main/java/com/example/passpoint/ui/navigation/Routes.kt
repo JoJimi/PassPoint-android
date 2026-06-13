@@ -11,5 +11,5 @@ object Routes {
     const val QUESTION_DETAIL = "questions/{id}"    // {id}는 이동할 때 채울 자리;
 
     // 상세로 이동할 때 실제 id를 끼워 주소를 만드는 헬퍼
-    fun questionDetail(id: Long) = "question/$id"
+    fun questionDetail(id: Long) = "questions/$id"
 }

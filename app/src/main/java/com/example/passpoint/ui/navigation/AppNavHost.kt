@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.example.passpoint.core.network.RetrofitClient
 import com.example.passpoint.feature.auth.ui.LoginScreen
 import com.example.passpoint.feature.home.ui.HomeScreen
+import com.example.passpoint.feature.question.ui.QuestionDetailScreen
 import com.example.passpoint.feature.question.ui.QuestionListScreen
 
 @Composable
@@ -67,7 +68,10 @@ fun AppNavHost() {
             arguments = listOf(navArgument("id") {type = NavType.LongType})
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getLong("id") ?: return@composable
-            // TODO: QuestionDetailScreen(id = id)
+            QuestionDetailScreen(
+                id = id,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
