@@ -8,6 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.passpoint.core.network.RetrofitClient
+import com.example.passpoint.feature.answer.ui.FeedbackScreen
+import com.example.passpoint.feature.answer.ui.ProcessingScreen
 import com.example.passpoint.feature.auth.ui.LoginScreen
 import com.example.passpoint.feature.home.ui.HomeScreen
 import com.example.passpoint.feature.question.ui.QuestionDetailScreen
@@ -70,7 +72,51 @@ fun AppNavHost() {
             val id = backStackEntry.arguments?.getLong("id") ?: return@composable
             QuestionDetailScreen(
                 id = id,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onSubmitSuccess = { answerId ->
+                    navController.navigate(Routes.answerProcessing(answerId))
+                }
+            )
+        }
+
+        // 처리 중(분석 중) 화면 (주소에 {id}로 answerId를 받는다)
+        composable(
+            route = Routes.ANSWER_PROCESSING,
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val answerId = backStackEntry.arguments?.getLong("id") ?: return@composable
+            ProcessingScreen(
+                answerId = answerId,
+                onDone = { id ->
+                    navController.navigate(Routes.answerFeedback(id)) {
+                        popUpTo(Routes.QUESTION_DETAIL) { inclusive = false }
+                    }
+                },
+                onRetry = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // 피드백 결과 화면 (주소에 {id}로 answerId를 받는다)
+        composable(
+            route = Routes.ANSWER_FEEDBACK,
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val answerId = backStackEntry.arguments?.getLong("id") ?: return@composable
+            FeedbackScreen(
+                answerId = answerId,
+                onBack = { navController.popBackStack() },
+                onRetryQuestion = { questionId ->
+                    navController.navigate(Routes.questionDetail(questionId)) {
+                        popUpTo(Routes.QUESTION_DETAIL) { inclusive = true }
+                    }
+                },
+                onGoToList = {
+                    navController.navigate(Routes.QUESTION_LIST) {
+                        popUpTo(Routes.QUESTION_LIST) { inclusive = true }
+                    }
+                }
             )
         }
     }

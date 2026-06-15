@@ -1,5 +1,6 @@
 package com.example.passpoint.feature.question.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,11 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.passpoint.feature.answer.ui.AnswerSubmitState
 import com.example.passpoint.feature.question.data.dto.response.QuestionDetailResponse
 
 // 시안에서 뽑은 색
@@ -57,12 +60,30 @@ private fun categoryLabel(value: String): String =
 fun QuestionDetailScreen(
     id: Long,
     viewModel: QuestionDetailViewModel = viewModel(),
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onSubmitSuccess: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val submitState by viewModel.submitState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(id) {
         viewModel.load(id)
+    }
+
+    // 제출 결과(성공/실패)는 1회만 처리하고 Idle로 되돌린다.
+    LaunchedEffect(submitState) {
+        when (val state = submitState) {
+            is AnswerSubmitState.Success -> {
+                onSubmitSuccess(state.answerId)
+                viewModel.consumeSubmitState()
+            }
+            is AnswerSubmitState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                viewModel.consumeSubmitState()
+            }
+            else -> Unit
+        }
     }
 
     Column(
@@ -101,14 +122,22 @@ fun QuestionDetailScreen(
                 }
             }
             is QuestionDetailUiState.Success -> {
-                QuestionDetailContent(question = state.question)
+                QuestionDetailContent(
+                    question = state.question,
+                    submitState = submitState,
+                    onSubmit = { answerText -> viewModel.submitAnswer(state.question.id, answerText) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun QuestionDetailContent(question: QuestionDetailResponse) {
+private fun QuestionDetailContent(
+    question: QuestionDetailResponse,
+    submitState: AnswerSubmitState,
+    onSubmit: (String) -> Unit
+) {
     var showHint by remember { mutableStateOf(false) }
     var answerMode by remember { mutableStateOf(AnswerMode.VOICE) }
     var answerText by remember { mutableStateOf("") }
@@ -199,15 +228,26 @@ private fun QuestionDetailContent(question: QuestionDetailResponse) {
 
         Spacer(Modifier.height(16.dp))
 
+        val isSubmitting = submitState is AnswerSubmitState.Submitting
+
         Button(
-            onClick = { /* TODO: 답변 제출 API 연동 */ },
+            onClick = { onSubmit(answerText) },
+            enabled = !isSubmitting,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = PassPurple)
         ) {
-            Text("제출하기", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isSubmitting) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(20.dp)
+                )
+            } else {
+                Text("제출하기", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         Spacer(Modifier.height(24.dp))

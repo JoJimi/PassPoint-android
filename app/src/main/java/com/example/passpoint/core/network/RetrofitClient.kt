@@ -3,6 +3,7 @@ package com.example.passpoint.core.network
 import android.content.Context
 import com.example.passpoint.BuildConfig
 import com.example.passpoint.core.local.TokenManager
+import com.example.passpoint.feature.answer.data.AnswerApi
 import com.example.passpoint.feature.auth.data.AuthApi
 import com.example.passpoint.feature.auth.data.dto.request.RefreshRequest
 import com.example.passpoint.feature.question.data.QuestionApi
@@ -124,4 +125,5 @@ object RetrofitClient {
     // API 설계도 → 실제 동작하는 구현체
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val questionApi: QuestionApi = retrofit.create(QuestionApi::class.java)
+    val answerApi: AnswerApi = retrofit.create(AnswerApi::class.java)
 }

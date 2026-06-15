@@ -9,7 +9,15 @@ object Routes {
     const val HOME = "home"
     const val QUESTION_LIST = "questions"
     const val QUESTION_DETAIL = "questions/{id}"    // {id}는 이동할 때 채울 자리;
+    const val ANSWER_PROCESSING = "answers/{id}/processing"
+    const val ANSWER_FEEDBACK = "answers/{id}/feedback"
 
     // 상세로 이동할 때 실제 id를 끼워 주소를 만드는 헬퍼
     fun questionDetail(id: Long) = "questions/$id"
+
+    // 답변 제출 후 처리 중 화면으로 이동할 때 answerId를 끼워 주소를 만드는 헬퍼
+    fun answerProcessing(answerId: Long) = "answers/$answerId/processing"
+
+    // 처리 완료 후 피드백 결과 화면으로 이동할 때 answerId를 끼워 주소를 만드는 헬퍼
+    fun answerFeedback(answerId: Long) = "answers/$answerId/feedback"
 }
