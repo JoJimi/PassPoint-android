@@ -1,6 +1,11 @@
 package com.example.passpoint.feature.question.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,12 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,9 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.answer.ui.AnswerSubmitState
+import com.example.passpoint.feature.answer.ui.RecordingState
 import com.example.passpoint.feature.question.data.dto.response.QuestionDetailResponse
 
 // 시안에서 뽑은 색
@@ -39,7 +41,6 @@ private val BorderColor = Color(0xFFE3E3EA)
 
 private const val ANSWER_MAX_LENGTH = 3000
 
-// 답변 방식
 private enum class AnswerMode(val label: String, val icon: String) {
     VOICE("음성으로 답변", "🎤"),
     TEXT("텍스트로 답변", "⌨")
@@ -52,9 +53,14 @@ private fun difficultyLabel(value: String): String = when (value) {
     else -> value
 }
 
-// ENUM 형태 카테고리 값을 보기 좋은 라벨로 변환 (예: SPRING_CORE -> Spring Core)
 private fun categoryLabel(value: String): String =
     value.split("_").joinToString(" ") { it.lowercase().replaceFirstChar(Char::uppercase) }
+
+private fun formatRecordingTime(seconds: Int): String {
+    val m = seconds / 60
+    val s = seconds % 60
+    return "%02d:%02d".format(m, s)
+}
 
 @Composable
 fun QuestionDetailScreen(
@@ -65,13 +71,23 @@ fun QuestionDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
+    val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            viewModel.startRecording()
+        } else {
+            Toast.makeText(context, "녹음 권한이 필요해요. 설정에서 허용해주세요.", Toast.LENGTH_LONG).show()
+        }
+    }
 
     LaunchedEffect(id) {
         viewModel.load(id)
     }
 
-    // 제출 결과(성공/실패)는 1회만 처리하고 Idle로 되돌린다.
     LaunchedEffect(submitState) {
         when (val state = submitState) {
             is AnswerSubmitState.Success -> {
@@ -91,7 +107,6 @@ fun QuestionDetailScreen(
             .fillMaxSize()
             .background(ScreenBg)
     ) {
-        // 헤더
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -107,7 +122,7 @@ fun QuestionDetailScreen(
             Spacer(Modifier.weight(1f))
             Text(text = "질문 상세", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
-            Spacer(Modifier.width(22.dp)) // 좌우 균형용
+            Spacer(Modifier.width(22.dp))
         }
 
         when (val state = uiState) {
@@ -125,7 +140,24 @@ fun QuestionDetailScreen(
                 QuestionDetailContent(
                     question = state.question,
                     submitState = submitState,
-                    onSubmit = { answerText -> viewModel.submitAnswer(state.question.id, answerText) }
+                    recordingState = recordingState,
+                    onSubmitText = { text -> viewModel.submitAnswer(state.question.id, text) },
+                    onSubmitVoice = { viewModel.submitVoiceAnswer(state.question.id) },
+                    onStartRecording = {
+                        if (ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.RECORD_AUDIO
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            viewModel.startRecording()
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
+                    onStopRecording = { viewModel.stopRecording() },
+                    onStartPlayback = { viewModel.startPlayback() },
+                    onStopPlayback = { viewModel.stopPlayback() },
+                    onResetRecording = { viewModel.resetRecording() }
                 )
             }
         }
@@ -136,11 +168,25 @@ fun QuestionDetailScreen(
 private fun QuestionDetailContent(
     question: QuestionDetailResponse,
     submitState: AnswerSubmitState,
-    onSubmit: (String) -> Unit
+    recordingState: RecordingState,
+    onSubmitText: (String) -> Unit,
+    onSubmitVoice: () -> Unit,
+    onStartRecording: () -> Unit,
+    onStopRecording: () -> Unit,
+    onStartPlayback: () -> Unit,
+    onStopPlayback: () -> Unit,
+    onResetRecording: () -> Unit
 ) {
     var showHint by remember { mutableStateOf(false) }
     var answerMode by remember { mutableStateOf(AnswerMode.VOICE) }
     var answerText by remember { mutableStateOf("") }
+
+    // 텍스트 모드로 전환 시 진행 중인 녹음/재생 초기화
+    LaunchedEffect(answerMode) {
+        if (answerMode == AnswerMode.TEXT) {
+            onResetRecording()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -148,7 +194,6 @@ private fun QuestionDetailContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
     ) {
-        // 카테고리 뱃지 (왼쪽) / 난이도 뱃지 (오른쪽)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -163,7 +208,6 @@ private fun QuestionDetailContent(
 
         Spacer(Modifier.height(12.dp))
 
-        // 제목
         Text(
             text = question.title,
             fontSize = 20.sp,
@@ -173,7 +217,6 @@ private fun QuestionDetailContent(
 
         Spacer(Modifier.height(12.dp))
 
-        // 힌트 토글
         if (!question.hint.isNullOrBlank()) {
             HintToggle(
                 hint = question.hint,
@@ -183,7 +226,6 @@ private fun QuestionDetailContent(
             Spacer(Modifier.height(16.dp))
         }
 
-        // 본문
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -201,7 +243,6 @@ private fun QuestionDetailContent(
 
         Spacer(Modifier.height(24.dp))
 
-        // 나의 답변 방식
         Text(text = "나의 답변 방식", fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))
 
@@ -219,7 +260,14 @@ private fun QuestionDetailContent(
         Spacer(Modifier.height(16.dp))
 
         when (answerMode) {
-            AnswerMode.VOICE -> VoiceAnswerPlaceholder()
+            AnswerMode.VOICE -> VoiceAnswerRecorder(
+                recordingState = recordingState,
+                onStartRecording = onStartRecording,
+                onStopRecording = onStopRecording,
+                onStartPlayback = onStartPlayback,
+                onStopPlayback = onStopPlayback,
+                onResetRecording = onResetRecording
+            )
             AnswerMode.TEXT -> TextAnswerInput(
                 text = answerText,
                 onTextChange = { if (it.length <= ANSWER_MAX_LENGTH) answerText = it }
@@ -229,10 +277,20 @@ private fun QuestionDetailContent(
         Spacer(Modifier.height(16.dp))
 
         val isSubmitting = submitState is AnswerSubmitState.Submitting
+        val canSubmit = when (answerMode) {
+            AnswerMode.VOICE ->
+                (recordingState is RecordingState.Recorded || recordingState is RecordingState.Playing) && !isSubmitting
+            AnswerMode.TEXT -> answerText.isNotBlank() && !isSubmitting
+        }
 
         Button(
-            onClick = { onSubmit(answerText) },
-            enabled = !isSubmitting,
+            onClick = {
+                when (answerMode) {
+                    AnswerMode.VOICE -> onSubmitVoice()
+                    AnswerMode.TEXT -> onSubmitText(answerText)
+                }
+            },
+            enabled = canSubmit,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -254,7 +312,136 @@ private fun QuestionDetailContent(
     }
 }
 
-// 카테고리 뱃지
+@Composable
+private fun VoiceAnswerRecorder(
+    recordingState: RecordingState,
+    onStartRecording: () -> Unit,
+    onStopRecording: () -> Unit,
+    onStartPlayback: () -> Unit,
+    onStopPlayback: () -> Unit,
+    onResetRecording: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White)
+            .padding(vertical = 32.dp, horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        when (recordingState) {
+            is RecordingState.Idle -> {
+                Text(
+                    text = "버튼을 눌러 음성으로 답변하세요",
+                    fontSize = 14.sp,
+                    color = Color(0xFF6B6B76)
+                )
+                Spacer(Modifier.height(20.dp))
+                RecordToggleButton(isRecording = false, onClick = onStartRecording)
+                Spacer(Modifier.height(12.dp))
+                Text("탭하여 녹음 시작", fontSize = 12.sp, color = TagText)
+            }
+
+            is RecordingState.Recording -> {
+                Text(
+                    text = "녹음 중...",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFE5484D)
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = formatRecordingTime(recordingState.elapsedSeconds),
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2B2B33)
+                )
+                Spacer(Modifier.height(20.dp))
+                RecordToggleButton(isRecording = true, onClick = onStopRecording)
+                Spacer(Modifier.height(12.dp))
+                Text("탭하여 정지", fontSize = 12.sp, color = TagText)
+            }
+
+            is RecordingState.Recorded -> {
+                Text(
+                    text = "녹음 완료",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF2E9E5B)
+                )
+                Spacer(Modifier.height(20.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onResetRecording,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, BorderColor),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6B6B76))
+                    ) {
+                        Text("다시 녹음")
+                    }
+                    Button(
+                        onClick = onStartPlayback,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PassPurple)
+                    ) {
+                        Text("▶ 재생")
+                    }
+                }
+            }
+
+            is RecordingState.Playing -> {
+                Text(
+                    text = "재생 중...",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = PassPurple
+                )
+                Spacer(Modifier.height(20.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onResetRecording,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, BorderColor),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6B6B76))
+                    ) {
+                        Text("다시 녹음")
+                    }
+                    Button(
+                        onClick = onStopPlayback,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PassPurple)
+                    ) {
+                        Text("⏹ 정지")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecordToggleButton(isRecording: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(72.dp)
+            .clip(CircleShape)
+            .background(if (isRecording) Color(0xFFE5484D) else PassPurple)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = if (isRecording) "⏹" else "🎤",
+            fontSize = 28.sp
+        )
+    }
+}
+
 @Composable
 private fun CategoryBadge(text: String) {
     Box(
@@ -267,7 +454,6 @@ private fun CategoryBadge(text: String) {
     }
 }
 
-// 난이도 뱃지 (난이도별로 색을 구분해서 카테고리 뱃지와 헷갈리지 않도록 표시)
 @Composable
 private fun DifficultyBadge(value: String) {
     val (bg, text) = when (value) {
@@ -276,7 +462,6 @@ private fun DifficultyBadge(value: String) {
         "HARD" -> Color(0xFFFDEAEA) to Color(0xFFE5484D)
         else -> TagBg to TagText
     }
-
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
@@ -292,7 +477,6 @@ private fun DifficultyBadge(value: String) {
     }
 }
 
-// 힌트 보기/숨기기 토글
 @Composable
 private fun HintToggle(hint: String, expanded: Boolean, onToggle: () -> Unit) {
     Column {
@@ -329,7 +513,6 @@ private fun HintToggle(hint: String, expanded: Boolean, onToggle: () -> Unit) {
     }
 }
 
-// 답변 방식 선택 카드 (음성 / 텍스트)
 @Composable
 private fun AnswerModeCard(
     mode: AnswerMode,
@@ -361,35 +544,6 @@ private fun AnswerModeCard(
     }
 }
 
-// 음성 답변 영역 (자리만 - 실제 녹음 기능은 추후 연동)
-@Composable
-private fun VoiceAnswerPlaceholder() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .padding(vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("버튼을 눌러 음성으로 답변하세요", fontSize = 14.sp, color = Color(0xFF6B6B76))
-        Spacer(Modifier.height(20.dp))
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(PassPurple)
-                .clickable { /* TODO: 음성 녹음 기능 연동 */ },
-            contentAlignment = Alignment.Center
-        ) {
-            Text("🎤", fontSize = 28.sp)
-        }
-        Spacer(Modifier.height(12.dp))
-        Text("예상 시간 90초", fontSize = 12.sp, color = TagText)
-    }
-}
-
-// 텍스트 답변 입력 영역
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TextAnswerInput(text: String, onTextChange: (String) -> Unit) {
