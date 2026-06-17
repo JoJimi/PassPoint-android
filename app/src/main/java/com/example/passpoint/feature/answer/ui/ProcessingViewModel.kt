@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-private const val MAX_ATTEMPTS = 30
-private const val POLL_INTERVAL_MS = 1500L
+private const val MAX_ATTEMPTS = 60
+private const val POLL_INTERVAL_MS = 2000L
 
 class ProcessingViewModel : ViewModel() {
 
