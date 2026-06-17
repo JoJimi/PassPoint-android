@@ -1,10 +1,12 @@
 package com.example.passpoint.feature.answer.data
 
+import com.example.passpoint.core.dto.response.PageResponse
 import com.example.passpoint.core.network.RetrofitClient
 import com.example.passpoint.feature.answer.data.dto.request.AnswerCreateRequest
 import com.example.passpoint.feature.answer.data.dto.request.AudioPresignedUrlRequest
 import com.example.passpoint.feature.answer.data.dto.response.AnswerDetailResponse
 import com.example.passpoint.feature.answer.data.dto.response.AnswerResponse
+import com.example.passpoint.feature.answer.data.dto.response.AnswerSummaryResponse
 import com.example.passpoint.feature.answer.data.dto.response.AudioPresignedUrlResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -50,5 +52,9 @@ class AnswerRepository {
         return answerApi.submit(
             AnswerCreateRequest(questionId = questionId, type = "VOICE", audioKey = audioKey)
         )
+    }
+
+    suspend fun getAnswerList(page: Int = 0, size: Int = 20): PageResponse<AnswerSummaryResponse> {
+        return answerApi.getList(page = page, size = size)
     }
 }

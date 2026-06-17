@@ -8,6 +8,7 @@ import com.example.passpoint.feature.answer.data.StorageApi
 import com.example.passpoint.feature.auth.data.AuthApi
 import com.example.passpoint.feature.auth.data.dto.request.RefreshRequest
 import com.example.passpoint.feature.question.data.QuestionApi
+import com.example.passpoint.feature.user.data.UserApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -127,6 +128,7 @@ object RetrofitClient {
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val questionApi: QuestionApi = retrofit.create(QuestionApi::class.java)
     val answerApi: AnswerApi = retrofit.create(AnswerApi::class.java)
+    val userApi: UserApi = retrofit.create(UserApi::class.java)
 
     // presigned URL로 MinIO/S3에 직접 PUT 업로드하는 클라이언트.
     // authInterceptor/tokenAuthenticator를 타지 않아야 한다 — presigned URL 서명에 Authorization 헤더가 포함되면 검증 실패.

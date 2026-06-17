@@ -1,14 +1,17 @@
 package com.example.passpoint.feature.answer.data
 
+import com.example.passpoint.core.dto.response.PageResponse
 import com.example.passpoint.feature.answer.data.dto.request.AnswerCreateRequest
 import com.example.passpoint.feature.answer.data.dto.request.AudioPresignedUrlRequest
 import com.example.passpoint.feature.answer.data.dto.response.AnswerDetailResponse
 import com.example.passpoint.feature.answer.data.dto.response.AnswerResponse
+import com.example.passpoint.feature.answer.data.dto.response.AnswerSummaryResponse
 import com.example.passpoint.feature.answer.data.dto.response.AudioPresignedUrlResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface AnswerApi {
 
@@ -17,6 +20,12 @@ interface AnswerApi {
 
     @GET("api/v1/answers/{id}")
     suspend fun getDetail(@Path("id") id: Long): AnswerDetailResponse
+
+    @GET("api/v1/answers")
+    suspend fun getList(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): PageResponse<AnswerSummaryResponse>
 
     /**
      * 음성 업로드용 presigned URL 발급
