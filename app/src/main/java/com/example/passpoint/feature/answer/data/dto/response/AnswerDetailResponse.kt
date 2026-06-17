@@ -8,7 +8,9 @@ data class AnswerDetailResponse(
     val answerId: Long,
     val question: QuestionInfo,
     val type: String,
-    val answerText: String,
+    val answerText: String?,
+    val audioUrl: String?,
+    val audioDuration: Int?,
     val status: String,
     val feedback: FeedbackResponse?,
     val createdAt: String

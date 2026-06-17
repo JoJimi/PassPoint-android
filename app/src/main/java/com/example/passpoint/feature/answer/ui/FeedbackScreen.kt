@@ -1,15 +1,18 @@
 package com.example.passpoint.feature.answer.ui
 
+import android.media.MediaPlayer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -154,6 +157,18 @@ private fun FeedbackContent(
             Spacer(Modifier.height(4.dp))
 
             QuestionInfoCard(question = answer.question)
+
+            if (answer.type == "VOICE" && answer.audioUrl != null) {
+                Spacer(Modifier.height(16.dp))
+                VoicePlaybackBar(
+                    audioUrl = answer.audioUrl,
+                    durationSeconds = answer.audioDuration
+                )
+                if (!answer.answerText.isNullOrBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    SttTextCard(text = answer.answerText)
+                }
+            }
 
             Spacer(Modifier.height(20.dp))
 
@@ -441,6 +456,132 @@ private fun KeywordsSection(keywords: List<String>) {
                 ) {
                     Text(text = keyword, fontSize = 12.sp, color = Color(0xFF5B5B66))
                 }
+            }
+        }
+    }
+}
+
+// 음성 재생 바 (VOICE 답변 전용)
+@Composable
+private fun VoicePlaybackBar(audioUrl: String, durationSeconds: Int?) {
+    var isPlaying by remember { mutableStateOf(false) }
+    var isPreparing by remember { mutableStateOf(false) }
+    val player = remember { MediaPlayer() }
+
+    DisposableEffect(audioUrl) {
+        onDispose {
+            try { if (player.isPlaying) player.stop() } catch (_: Exception) {}
+            player.release()
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(if (isPreparing) Color(0xFFBBBBBB) else PassPurple)
+                .clickable(enabled = !isPreparing) {
+                    if (isPlaying) {
+                        try { player.pause() } catch (_: Exception) {}
+                        isPlaying = false
+                    } else {
+                        try {
+                            player.reset()
+                            player.setDataSource(audioUrl)
+                            player.setOnCompletionListener { isPlaying = false }
+                            player.setOnPreparedListener { mp ->
+                                isPreparing = false
+                                mp.start()
+                                isPlaying = true
+                            }
+                            player.prepareAsync()
+                            isPreparing = true
+                        } catch (_: Exception) {
+                            isPreparing = false
+                        }
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (isPreparing) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(22.dp)
+                )
+            } else {
+                Text(text = if (isPlaying) "⏸" else "▶", fontSize = 18.sp, color = Color.White)
+            }
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "음성 답변",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF2B2B33)
+            )
+            if (durationSeconds != null) {
+                Text(
+                    text = formatDuration(durationSeconds),
+                    fontSize = 12.sp,
+                    color = TagText
+                )
+            }
+        }
+    }
+}
+
+private fun formatDuration(seconds: Int): String {
+    val m = seconds / 60
+    val s = seconds % 60
+    return "%02d:%02d".format(m, s)
+}
+
+// STT 변환 결과 카드
+@Composable
+private fun SttTextCard(text: String) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(PassPurpleLight)
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = "음성 인식 텍스트 보기",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = PassPurple
+            )
+            Spacer(Modifier.weight(1f))
+            Text(if (expanded) "▾" else "▸", fontSize = 12.sp, color = PassPurple)
+        }
+
+        if (expanded) {
+            Spacer(Modifier.height(6.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White)
+                    .padding(12.dp)
+            ) {
+                Text(text, fontSize = 13.sp, color = Color(0xFF5B5B66), lineHeight = 20.sp)
             }
         }
     }
