@@ -40,6 +40,7 @@ class QuestionDetailViewModel(application: Application) : AndroidViewModel(appli
     private var player: MediaPlayer? = null
     private var recordedFile: File? = null
     private var timerJob: Job? = null
+    private var uploadedAudioKey: String? = null
 
     fun load(id: Long) {
         if (loadedId == id) return
@@ -78,9 +79,28 @@ class QuestionDetailViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
-    // F7/F8에서 구현: presigned URL 발급 → MinIO 업로드 → POST /answers(VOICE)
+    /**
+     * F7: presigned URL 발급 → MinIO PUT 업로드 → audioKey 보관
+     * F8에서 POST /answers(VOICE) 호출 + 처리중 화면 연결 추가 예정
+     */
     fun submitVoiceAnswer(questionId: Long) {
-        _submitState.value = AnswerSubmitState.Error("음성 업로드 기능을 준비 중이에요. (F7 단계)")
+        val file = recordedFile ?: run {
+            _submitState.value = AnswerSubmitState.Error("녹음된 파일이 없어요.")
+            return
+        }
+
+        viewModelScope.launch {
+            _submitState.value = AnswerSubmitState.Submitting
+            try {
+                val presigned = answerRepository.getAudioPresignedUrl()
+                answerRepository.uploadAudio(presigned.uploadUrl, file)
+                uploadedAudioKey = presigned.key
+                // F8에서 여기에 POST /answers(VOICE, audioKey) + 처리중 화면 네비게이션 추가
+                _submitState.value = AnswerSubmitState.Error("음성 업로드 완료! (F8에서 제출 연결 예정)")
+            } catch (e: Exception) {
+                _submitState.value = AnswerSubmitState.Error(e.toUserMessage("음성 업로드에 실패했어요."))
+            }
+        }
     }
 
     fun consumeSubmitState() {

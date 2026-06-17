@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.passpoint.BuildConfig
 import com.example.passpoint.core.local.TokenManager
 import com.example.passpoint.feature.answer.data.AnswerApi
+import com.example.passpoint.feature.answer.data.StorageApi
 import com.example.passpoint.feature.auth.data.AuthApi
 import com.example.passpoint.feature.auth.data.dto.request.RefreshRequest
 import com.example.passpoint.feature.question.data.QuestionApi
@@ -126,4 +127,20 @@ object RetrofitClient {
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val questionApi: QuestionApi = retrofit.create(QuestionApi::class.java)
     val answerApi: AnswerApi = retrofit.create(AnswerApi::class.java)
+
+    // presigned URL로 MinIO/S3에 직접 PUT 업로드하는 클라이언트.
+    // authInterceptor/tokenAuthenticator를 타지 않아야 한다 — presigned URL 서명에 Authorization 헤더가 포함되면 검증 실패.
+    private val storageOkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(loggingInterceptor)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS) // 대용량 파일 업로드 여유
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    val storageApi: StorageApi = Retrofit.Builder()
+        .baseUrl("http://localhost/") // @Url로 덮어써지므로 실제로 쓰이지 않음
+        .client(storageOkHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(StorageApi::class.java)
 }
