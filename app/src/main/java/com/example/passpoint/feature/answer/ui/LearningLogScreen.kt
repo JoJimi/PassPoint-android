@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +55,22 @@ private fun categoryKorLabel(value: String): String = when (value) {
     else -> value
 }
 
+// 카테고리 필터 칩 목록 (전체 + 주요 카테고리). 서버가 category 파라미터를 지원 안 해서
+// 이미 불러온 답변 목록을 클라이언트에서 필터링하는 용도로 쓴다.
+private val categories = listOf(
+    "전체" to null,
+    "CS" to "CS",
+    "언어" to "LANGUAGE",
+    "Spring" to "SPRING",
+    "자료구조" to "DATA_STRUCTURE",
+    "알고리즘" to "ALGORITHM",
+    "데이터베이스" to "DATABASE",
+    "보안" to "SECURITY",
+    "인프라" to "INFRA",
+    "아키텍처" to "SW_ARCHITECTURE",
+    "웹" to "WEB"
+)
+
 private fun formatDate(createdAt: String): String =
     createdAt.take(10).replace("-", ".")
 
@@ -60,6 +80,10 @@ fun LearningLogScreen(
     onAnswerClick: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // 카테고리 필터를 바꾸면 ViewModel이 잠깐 Loading으로 갔다가 Success로 돌아오므로,
+    // Success 분기 안에서 remember하면 그 사이에 선택 상태가 초기화된다. when 밖에 둬서 유지한다.
+    var selectedCategory by remember { mutableStateOf("전체") }
+    var selectedCategoryValue by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -128,6 +152,26 @@ fun LearningLogScreen(
                         }
                     }
 
+                    // 카테고리 필터 칩
+                    item {
+                        LazyRow(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(categories) { (label, value) ->
+                                CategoryChip(
+                                    label = label,
+                                    selected = label == selectedCategory,
+                                    onClick = {
+                                        selectedCategory = label
+                                        selectedCategoryValue = value
+                                        viewModel.filterByCategory(value)
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     // 목록 헤더
                     item {
                         Row(
@@ -159,10 +203,14 @@ fun LearningLogScreen(
                                     .padding(top = 60.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("아직 풀어본 질문이 없어요.", color = TextSecondary, fontSize = 15.sp)
-                                    Spacer(Modifier.height(4.dp))
-                                    Text("질문을 풀고 내 기록을 쌓아보세요!", color = TextSecondary, fontSize = 13.sp)
+                                if (selectedCategoryValue == null) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text("아직 풀어본 질문이 없어요.", color = TextSecondary, fontSize = 15.sp)
+                                        Spacer(Modifier.height(4.dp))
+                                        Text("질문을 풀고 내 기록을 쌓아보세요!", color = TextSecondary, fontSize = 13.sp)
+                                    }
+                                } else {
+                                    Text("이 카테고리에는 답변 기록이 없어요.", color = TextSecondary, fontSize = 14.sp)
                                 }
                             }
                         }
@@ -274,6 +322,28 @@ private fun StatCard(
                 color = TextSecondary
             )
         }
+    }
+}
+
+@Composable
+private fun CategoryChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (selected) PassPurple else CardBg)
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp, vertical = 7.dp)
+    ) {
+        Text(
+            text = label,
+            color = if (selected) Color.White else TextSecondary,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
 

@@ -54,7 +54,11 @@ class AnswerRepository {
         )
     }
 
-    suspend fun getAnswerList(page: Int = 0, size: Int = 20): PageResponse<AnswerSummaryResponse> {
-        return answerApi.getList(page = page, size = size)
+    suspend fun getAnswerList(
+        category: String? = null,
+        page: Int = 0,
+        size: Int = 20
+    ): PageResponse<AnswerSummaryResponse> {
+        return answerApi.getList(category = category, page = page, size = size)
     }
 }

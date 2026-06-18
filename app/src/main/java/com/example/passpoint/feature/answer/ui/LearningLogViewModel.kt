@@ -22,6 +22,7 @@ class LearningLogViewModel : ViewModel() {
 
     private val loadedAnswers = mutableListOf<AnswerSummaryResponse>()
     private var currentPage = 0
+    private var currentCategory: String? = null
     private var isLastPage = false
     private var isLoading = false
 
@@ -40,7 +41,7 @@ class LearningLogViewModel : ViewModel() {
             try {
                 coroutineScope {
                     val statsDeferred = async { userRepository.getStats() }
-                    val listDeferred = async { answerRepository.getAnswerList(page = 0) }
+                    val listDeferred = async { answerRepository.getAnswerList(category = currentCategory, page = 0) }
 
                     val stats = statsDeferred.await()
                     val pageData = listDeferred.await()
@@ -71,7 +72,7 @@ class LearningLogViewModel : ViewModel() {
             _uiState.value = currentState.copy(isLoadingMore = true)
             try {
                 val nextPage = currentPage + 1
-                val pageData = answerRepository.getAnswerList(page = nextPage)
+                val pageData = answerRepository.getAnswerList(category = currentCategory, page = nextPage)
                 loadedAnswers.addAll(pageData.content)
                 currentPage = nextPage
                 isLastPage = pageData.last
@@ -86,6 +87,15 @@ class LearningLogViewModel : ViewModel() {
                 isLoading = false
             }
         }
+    }
+
+    /**
+     * 카테고리 칩 선택. null이면 전체, 값이 있으면 그 카테고리로 첫 페이지부터 다시 불러온다.
+     */
+    fun filterByCategory(category: String?) {
+        if (currentCategory == category) return
+        currentCategory = category
+        loadFirstPage()
     }
 
     fun refresh() {
