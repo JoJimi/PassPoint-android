@@ -56,9 +56,10 @@ class AnswerRepository {
 
     suspend fun getAnswerList(
         category: String? = null,
+        sort: String? = null,
         page: Int = 0,
         size: Int = 20
     ): PageResponse<AnswerSummaryResponse> {
-        return answerApi.getList(category = category, page = page, size = size)
+        return answerApi.getList(category = category, sort = sort, page = page, size = size)
     }
 }

@@ -23,6 +23,7 @@ class LearningLogViewModel : ViewModel() {
     private val loadedAnswers = mutableListOf<AnswerSummaryResponse>()
     private var currentPage = 0
     private var currentCategory: String? = null
+    private var currentSort: String = LearningLogSortOption.default.value
     private var isLastPage = false
     private var isLoading = false
 
@@ -41,7 +42,9 @@ class LearningLogViewModel : ViewModel() {
             try {
                 coroutineScope {
                     val statsDeferred = async { userRepository.getStats() }
-                    val listDeferred = async { answerRepository.getAnswerList(category = currentCategory, page = 0) }
+                    val listDeferred = async {
+                        answerRepository.getAnswerList(category = currentCategory, sort = currentSort, page = 0)
+                    }
 
                     val stats = statsDeferred.await()
                     val pageData = listDeferred.await()
@@ -72,7 +75,7 @@ class LearningLogViewModel : ViewModel() {
             _uiState.value = currentState.copy(isLoadingMore = true)
             try {
                 val nextPage = currentPage + 1
-                val pageData = answerRepository.getAnswerList(category = currentCategory, page = nextPage)
+                val pageData = answerRepository.getAnswerList(category = currentCategory, sort = currentSort, page = nextPage)
                 loadedAnswers.addAll(pageData.content)
                 currentPage = nextPage
                 isLastPage = pageData.last
@@ -95,6 +98,15 @@ class LearningLogViewModel : ViewModel() {
     fun filterByCategory(category: String?) {
         if (currentCategory == category) return
         currentCategory = category
+        loadFirstPage()
+    }
+
+    /**
+     * 정렬 옵션 변경. 첫 페이지부터 새 정렬로 다시 불러온다.
+     */
+    fun changeSort(sort: String) {
+        if (currentSort == sort) return
+        currentSort = sort
         loadFirstPage()
     }
 

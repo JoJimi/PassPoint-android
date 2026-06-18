@@ -24,6 +24,7 @@ interface AnswerApi {
     @GET("api/v1/answers")
     suspend fun getList(
         @Query("category") category: String? = null,
+        @Query("sort") sort: String? = null,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
     ): PageResponse<AnswerSummaryResponse>

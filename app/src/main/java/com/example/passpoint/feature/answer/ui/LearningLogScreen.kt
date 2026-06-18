@@ -83,6 +83,7 @@ fun LearningLogScreen(
     // Success 분기 안에서 remember하면 그 사이에 선택 상태가 초기화된다. when 밖에 둬서 유지한다.
     var selectedCategory by remember { mutableStateOf("전체") }
     var selectedCategoryValue by remember { mutableStateOf<String?>(null) }
+    var selectedSort by remember { mutableStateOf(LearningLogSortOption.default) }
 
     Column(
         modifier = Modifier
@@ -188,10 +189,12 @@ fun LearningLogScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
-                            Text(
-                                text = "최신순",
-                                fontSize = 13.sp,
-                                color = TextSecondary
+                            LearningLogSortDropdown(
+                                selected = selectedSort,
+                                onSelect = { option ->
+                                    selectedSort = option
+                                    viewModel.changeSort(option.value)
+                                }
                             )
                         }
                     }
@@ -322,6 +325,43 @@ private fun StatCard(
                 fontSize = 11.sp,
                 color = TextSecondary
             )
+        }
+    }
+}
+
+@Composable
+private fun LearningLogSortDropdown(
+    selected: LearningLogSortOption,
+    onSelect: (LearningLogSortOption) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { expanded = true }
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(selected.label, fontSize = 13.sp, color = TextSecondary)
+            Spacer(Modifier.width(4.dp))
+            Text("▾", fontSize = 12.sp, color = TextSecondary)
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            LearningLogSortOption.values().forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.label) },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
