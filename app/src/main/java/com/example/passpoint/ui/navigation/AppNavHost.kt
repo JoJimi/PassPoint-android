@@ -1,6 +1,5 @@
 package com.example.passpoint.ui.navigation
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -30,6 +29,7 @@ import com.example.passpoint.feature.auth.ui.LoginScreen
 import com.example.passpoint.feature.home.ui.HomeScreen
 import com.example.passpoint.feature.question.ui.QuestionDetailScreen
 import com.example.passpoint.feature.question.ui.QuestionListScreen
+import com.example.passpoint.feature.user.ui.MyPageScreen
 
 private val PassPurple = Color(0xFF5B4FE8)
 
@@ -166,9 +166,15 @@ fun AppNavHost() {
                 )
             }
 
-            // F11 placeholder
+            // F11: 마이페이지
             composable(Routes.MY_PAGE) {
-                MyPagePlaceholder()
+                MyPageScreen(
+                    onLogout = {
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
+                )
             }
         }
     }
@@ -205,15 +211,5 @@ private fun AppBottomBar(currentRoute: String?, navController: NavController) {
                 )
             )
         }
-    }
-}
-
-@Composable
-private fun MyPagePlaceholder() {
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
-    ) {
-        Text("마이페이지 (준비 중)", color = Color(0xFF8E8E9A))
     }
 }

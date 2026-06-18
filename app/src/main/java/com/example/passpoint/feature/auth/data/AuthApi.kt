@@ -3,6 +3,7 @@ package com.example.passpoint.feature.auth.data
 import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
 import com.example.passpoint.feature.auth.data.dto.request.RefreshRequest
 import com.example.passpoint.feature.auth.data.dto.response.TokenResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -26,4 +27,15 @@ interface AuthApi {
     suspend fun refresh(
         @Body request: RefreshRequest
     ): TokenResponse
+
+    /**
+     * 로그아웃
+     * POST /api/v1/auth/logout
+     * refreshToken을 블랙리스트에 등록해 더 이상 재발급에 쓰지 못하게 한다.
+     * 응답 바디가 없을 수 있어 Response<Unit>으로 받는다.
+     */
+    @POST("api/v1/auth/logout")
+    suspend fun logout(
+        @Body request: RefreshRequest
+    ): Response<Unit>
 }
