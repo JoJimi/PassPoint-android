@@ -26,6 +26,7 @@ import com.example.passpoint.feature.answer.ui.FeedbackScreen
 import com.example.passpoint.feature.answer.ui.LearningLogScreen
 import com.example.passpoint.feature.answer.ui.ProcessingScreen
 import com.example.passpoint.feature.auth.ui.LoginScreen
+import com.example.passpoint.feature.bookmark.ui.BookmarkListScreen
 import com.example.passpoint.feature.home.ui.HomeScreen
 import com.example.passpoint.feature.question.ui.QuestionDetailScreen
 import com.example.passpoint.feature.question.ui.QuestionListScreen
@@ -92,6 +93,16 @@ fun AppNavHost() {
                 HomeScreen(
                     onGoToQuestions = {
                         navController.navigate(Routes.QUESTION_LIST)
+                    },
+                    onSeeAllAnswers = {
+                        navController.navigate(Routes.LEARNING_LOG) {
+                            popUpTo(Routes.HOME) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onAnswerClick = { answerId ->
+                        navController.navigate(Routes.answerFeedback(answerId))
                     }
                 )
             }
@@ -173,6 +184,19 @@ fun AppNavHost() {
                         navController.navigate(Routes.LOGIN) {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
+                    },
+                    onBookmarkClick = {
+                        navController.navigate(Routes.BOOKMARK_LIST)
+                    }
+                )
+            }
+
+            // F12: 북마크 목록
+            composable(Routes.BOOKMARK_LIST) {
+                BookmarkListScreen(
+                    onBack = { navController.popBackStack() },
+                    onQuestionClick = { id ->
+                        navController.navigate(Routes.questionDetail(id))
                     }
                 )
             }

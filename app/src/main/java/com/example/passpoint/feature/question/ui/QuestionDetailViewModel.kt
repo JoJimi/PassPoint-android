@@ -10,6 +10,7 @@ import com.example.passpoint.core.network.toUserMessage
 import com.example.passpoint.feature.answer.data.AnswerRepository
 import com.example.passpoint.feature.answer.ui.AnswerSubmitState
 import com.example.passpoint.feature.answer.ui.RecordingState
+import com.example.passpoint.feature.bookmark.data.BookmarkRepository
 import com.example.passpoint.feature.question.data.QuestionRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,6 +26,7 @@ class QuestionDetailViewModel(application: Application) : AndroidViewModel(appli
 
     private val repository = QuestionRepository()
     private val answerRepository = AnswerRepository()
+    private val bookmarkRepository = BookmarkRepository()
 
     private val _uiState = MutableStateFlow<QuestionDetailUiState>(QuestionDetailUiState.Loading)
     val uiState: StateFlow<QuestionDetailUiState> = _uiState.asStateFlow()
@@ -34,6 +36,11 @@ class QuestionDetailViewModel(application: Application) : AndroidViewModel(appli
 
     private val _recordingState = MutableStateFlow<RecordingState>(RecordingState.Idle)
     val recordingState: StateFlow<RecordingState> = _recordingState.asStateFlow()
+
+    // 질문 상세 응답의 bookmarked로 초기값을 채우고, 별 탭은 로컬에서 토글한다(낙관적 업데이트 + 실패 시 롤백).
+    private val _isBookmarked = MutableStateFlow(false)
+    val isBookmarked: StateFlow<Boolean> = _isBookmarked.asStateFlow()
+    private var isBookmarkRequestInFlight = false
 
     private var loadedId: Long? = null
     private var recorder: MediaRecorder? = null
@@ -48,10 +55,31 @@ class QuestionDetailViewModel(application: Application) : AndroidViewModel(appli
             _uiState.value = QuestionDetailUiState.Loading
             try {
                 val question = repository.getDetail(id)
+                _isBookmarked.value = question.bookmarked
                 _uiState.value = QuestionDetailUiState.Success(question)
             } catch (e: Exception) {
                 loadedId = null
                 _uiState.value = QuestionDetailUiState.Error(e.message ?: "불러오기 실패")
+            }
+        }
+    }
+
+    /**
+     * 별 탭 → 먼저 화면을 바꾸고(낙관적 업데이트), 서버 요청이 실패하면 되돌린다.
+     */
+    fun toggleBookmark(questionId: Long) {
+        if (isBookmarkRequestInFlight) return
+        val nextValue = !_isBookmarked.value
+        _isBookmarked.value = nextValue
+
+        viewModelScope.launch {
+            isBookmarkRequestInFlight = true
+            try {
+                if (nextValue) bookmarkRepository.add(questionId) else bookmarkRepository.remove(questionId)
+            } catch (e: Exception) {
+                _isBookmarked.value = !nextValue
+            } finally {
+                isBookmarkRequestInFlight = false
             }
         }
     }

@@ -2,6 +2,7 @@ package com.example.passpoint.feature.question.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.passpoint.feature.bookmark.data.BookmarkRepository
 import com.example.passpoint.feature.question.data.QuestionRepository
 import com.example.passpoint.feature.question.data.dto.response.QuestionSearchResponse
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,9 +13,15 @@ import kotlinx.coroutines.launch
 class QuestionListViewModel : ViewModel() {
 
     private val repository = QuestionRepository()
+    private val bookmarkRepository = BookmarkRepository()
 
     private val _uiState = MutableStateFlow<QuestionListUiState>(QuestionListUiState.Loading)
     val uiState: StateFlow<QuestionListUiState> = _uiState.asStateFlow()
+
+    // 검색 응답의 bookmarked로 채우고, 별 탭은 로컬에서 토글한다(낙관적 업데이트 + 실패 시 롤백).
+    private val _bookmarkedIds = MutableStateFlow<Set<Long>>(emptySet())
+    val bookmarkedIds: StateFlow<Set<Long>> = _bookmarkedIds.asStateFlow()
+    private val bookmarkRequestsInFlight = mutableSetOf<Long>()
 
     // 현재 검색 조건 (페이징 동안 유지)
     private var currentKeyword: String? = null
@@ -66,6 +73,7 @@ class QuestionListViewModel : ViewModel() {
                 loadedQuestions.addAll(pageData.content)
                 isLastPage = pageData.last
                 totalCount = pageData.totalElements
+                _bookmarkedIds.value = pageData.content.filter { it.bookmarked }.map { it.id }.toSet()
                 _uiState.value = QuestionListUiState.Success(
                     questions = loadedQuestions.toList(),
                     totalCount = totalCount,
@@ -107,6 +115,8 @@ class QuestionListViewModel : ViewModel() {
                 currentPage = nextPage
                 isLastPage = pageData.last
                 totalCount = pageData.totalElements
+                _bookmarkedIds.value = _bookmarkedIds.value +
+                    pageData.content.filter { it.bookmarked }.map { it.id }.toSet()
                 _uiState.value = QuestionListUiState.Success(
                     questions = loadedQuestions.toList(),
                     totalCount = totalCount,
@@ -123,6 +133,34 @@ class QuestionListViewModel : ViewModel() {
                 )
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    /**
+     * 별 탭 → 먼저 화면을 바꾸고(낙관적 업데이트), 서버 요청이 실패하면 되돌린다.
+     */
+    fun toggleBookmark(questionId: Long) {
+        if (questionId in bookmarkRequestsInFlight) return
+        val nextValue = questionId !in _bookmarkedIds.value
+        _bookmarkedIds.value = if (nextValue) {
+            _bookmarkedIds.value + questionId
+        } else {
+            _bookmarkedIds.value - questionId
+        }
+
+        viewModelScope.launch {
+            bookmarkRequestsInFlight += questionId
+            try {
+                if (nextValue) bookmarkRepository.add(questionId) else bookmarkRepository.remove(questionId)
+            } catch (e: Exception) {
+                _bookmarkedIds.value = if (nextValue) {
+                    _bookmarkedIds.value - questionId
+                } else {
+                    _bookmarkedIds.value + questionId
+                }
+            } finally {
+                bookmarkRequestsInFlight -= questionId
             }
         }
     }

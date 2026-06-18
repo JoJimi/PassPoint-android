@@ -33,7 +33,8 @@ private val DangerColor = Color(0xFFE05252)
 @Composable
 fun MyPageScreen(
     viewModel: MyPageViewModel = viewModel(),
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onBookmarkClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -88,6 +89,7 @@ fun MyPageScreen(
                     StatsSection(stats = state.stats)
                     MenuSection(
                         isLoggingOut = state.isLoggingOut,
+                        onBookmarkClick = onBookmarkClick,
                         onLogoutClick = { showLogoutDialog = true }
                     )
                 }
@@ -233,6 +235,7 @@ private fun StatCard(
 @Composable
 private fun MenuSection(
     isLoggingOut: Boolean,
+    onBookmarkClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     Column(
@@ -247,7 +250,7 @@ private fun MenuSection(
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column {
-                MenuRow(label = "북마크", trailing = "준비 중", enabled = false, onClick = {})
+                MenuRow(label = "북마크", trailing = "›", enabled = true, onClick = onBookmarkClick)
                 Divider(color = ScreenBg)
                 MenuRow(
                     label = if (isLoggingOut) "로그아웃 중..." else "로그아웃",

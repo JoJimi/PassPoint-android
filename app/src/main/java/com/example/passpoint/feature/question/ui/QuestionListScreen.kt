@@ -55,6 +55,7 @@ fun QuestionListScreen(
     onQuestionClick: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val bookmarkedIds by viewModel.bookmarkedIds.collectAsStateWithLifecycle()
     var selectedCategory by remember { mutableStateOf("전체") }
     var selectedCategoryValue by remember { mutableStateOf<String?>(null) }
     var selectedSort by remember { mutableStateOf(SortOption.default) }
@@ -159,7 +160,9 @@ fun QuestionListScreen(
                         items(state.questions) { question ->
                             QuestionCard(
                                 question = question,
-                                onClick = { onQuestionClick(question.id) }
+                                isBookmarked = question.id in bookmarkedIds,
+                                onClick = { onQuestionClick(question.id) },
+                                onToggleBookmark = { viewModel.toggleBookmark(question.id) }
                             )
                         }
 
@@ -251,7 +254,9 @@ private fun CategoryChip(
 @Composable
 private fun QuestionCard(
     question: QuestionSearchResponse,
-    onClick: () -> Unit
+    isBookmarked: Boolean,
+    onClick: () -> Unit,
+    onToggleBookmark: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -262,18 +267,30 @@ private fun QuestionCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
-            // 카테고리 뱃지
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(PassPurpleLight)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // 카테고리 뱃지
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(PassPurpleLight)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = question.mainCategory,
+                        color = PassPurple,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Text(
-                    text = question.mainCategory,
-                    color = PassPurple,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
+                    text = if (isBookmarked) "⭐" else "☆",
+                    fontSize = 18.sp,
+                    modifier = Modifier.clickable { onToggleBookmark() }
                 )
             }
 

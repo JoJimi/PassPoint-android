@@ -58,6 +58,7 @@ fun FeedbackScreen(
     onGoToList: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isBookmarked by viewModel.isBookmarked.collectAsStateWithLifecycle()
 
     LaunchedEffect(answerId) {
         viewModel.load(answerId)
@@ -85,12 +86,18 @@ fun FeedbackScreen(
             Text(text = "피드백 결과", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
 
-            var bookmarked by remember { mutableStateOf(false) }
-            Text(
-                text = if (bookmarked) "⭐" else "☆",
-                fontSize = 20.sp,
-                modifier = Modifier.clickable { bookmarked = !bookmarked }
-            )
+            val currentState = uiState
+            if (currentState is FeedbackUiState.Success) {
+                Text(
+                    text = if (isBookmarked) "⭐" else "☆",
+                    fontSize = 20.sp,
+                    modifier = Modifier.clickable {
+                        viewModel.toggleBookmark(currentState.answer.question.id)
+                    }
+                )
+            } else {
+                Text("☆", fontSize = 20.sp, color = TagText)
+            }
         }
 
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

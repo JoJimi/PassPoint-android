@@ -72,6 +72,7 @@ fun QuestionDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val submitState by viewModel.submitState.collectAsStateWithLifecycle()
     val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
+    val isBookmarked by viewModel.isBookmarked.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -122,7 +123,19 @@ fun QuestionDetailScreen(
             Spacer(Modifier.weight(1f))
             Text(text = "질문 상세", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
-            Spacer(Modifier.width(22.dp))
+
+            val currentState = uiState
+            if (currentState is QuestionDetailUiState.Success) {
+                Text(
+                    text = if (isBookmarked) "⭐" else "☆",
+                    fontSize = 20.sp,
+                    modifier = Modifier.clickable {
+                        viewModel.toggleBookmark(currentState.question.id)
+                    }
+                )
+            } else {
+                Spacer(Modifier.width(22.dp))
+            }
         }
 
         when (val state = uiState) {
@@ -560,7 +573,7 @@ private fun TextAnswerInput(text: String, onTextChange: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp),
-            placeholder = { Text("텍스트로 답변해주세요...") },
+            placeholder = { Text("텍스트로 답변해주세요...", color = TagText) },
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = PassPurple,
                 unfocusedBorderColor = BorderColor

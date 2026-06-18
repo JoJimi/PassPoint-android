@@ -7,5 +7,6 @@ data class QuestionDetailResponse(
     val difficulty: String,
     val title: String,
     val content: String,
-    val hint: String?
+    val hint: String?,
+    val bookmarked: Boolean
 )

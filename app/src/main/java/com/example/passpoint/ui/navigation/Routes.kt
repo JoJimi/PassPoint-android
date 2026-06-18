@@ -13,6 +13,7 @@ object Routes {
     const val ANSWER_FEEDBACK = "answers/{id}/feedback"
     const val LEARNING_LOG = "learning_log"
     const val MY_PAGE = "my_page"
+    const val BOOKMARK_LIST = "bookmarks"
 
     // 상세로 이동할 때 실제 id를 끼워 주소를 만드는 헬퍼
     fun questionDetail(id: Long) = "questions/$id"
