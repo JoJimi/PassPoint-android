@@ -27,12 +27,21 @@ private val CardBg = Color.White
 private val TextPrimary = Color(0xFF2B2B33)
 private val TextSecondary = Color(0xFF8E8E9A)
 
+// 홈에서 바로 보여줄 카테고리 바로가기 (아이콘, 표시 라벨, API에 보낼 값)
+private val homeCategories = listOf(
+    Triple("💻", "CS", "CS"),
+    Triple("☕", "언어 (Java)", "LANGUAGE"),
+    Triple("🌱", "Spring", "SPRING"),
+    Triple("🗂", "자료구조", "DATA_STRUCTURE")
+)
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = viewModel(),
     onGoToQuestions: () -> Unit = {},
     onSeeAllAnswers: () -> Unit = {},
-    onAnswerClick: (Long) -> Unit = {}
+    onAnswerClick: (Long) -> Unit = {},
+    onCategoryClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -85,6 +94,10 @@ fun HomeScreen(
                 ) {
                     GreetingSection(nickname = state.nickname)
                     StatsSection(stats = state.stats)
+                    CategoriesSection(
+                        onCategoryClick = onCategoryClick,
+                        onSeeAllClick = onGoToQuestions
+                    )
                     RecentAnswersSection(
                         answers = state.recentAnswers,
                         onSeeAllClick = onSeeAllAnswers,
@@ -184,6 +197,85 @@ private fun StatCard(
             Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = valueColor)
             Spacer(Modifier.height(2.dp))
             Text(text = label, fontSize = 10.sp, color = TextSecondary)
+        }
+    }
+}
+
+@Composable
+private fun CategoriesSection(
+    onCategoryClick: (String) -> Unit,
+    onSeeAllClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "카테고리",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            Text(
+                text = "전체보기 ›",
+                fontSize = 12.sp,
+                color = TextSecondary,
+                modifier = Modifier.clickable { onSeeAllClick() }
+            )
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            homeCategories.forEach { (icon, label, value) ->
+                CategoryCard(
+                    modifier = Modifier.weight(1f),
+                    icon = icon,
+                    label = label,
+                    onClick = { onCategoryClick(value) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryCard(
+    modifier: Modifier = Modifier,
+    icon: String,
+    label: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBg),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = icon, fontSize = 18.sp)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+                maxLines = 1
+            )
         }
     }
 }
