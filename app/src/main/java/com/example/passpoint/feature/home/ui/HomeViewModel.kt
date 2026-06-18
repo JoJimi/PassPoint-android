@@ -21,9 +21,9 @@ class HomeViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    init {
-        load()
-    }
+    // init에서 한 번만 부르면 마이페이지에서 닉네임을 바꾼 뒤 홈 탭으로 돌아와도
+    // 살아있는 같은 ViewModel 인스턴스라 새로 안 불러온다. 화면에 들어올 때마다
+    // refresh()를 호출하게 하고(HomeScreen의 LaunchedEffect), 여기서는 자동 로드를 하지 않는다.
 
     private fun load() {
         _uiState.value = HomeUiState.Loading

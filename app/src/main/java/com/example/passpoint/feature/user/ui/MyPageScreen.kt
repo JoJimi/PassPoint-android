@@ -38,10 +38,19 @@ fun MyPageScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val profileEditState by viewModel.profileEditState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState) {
         if (uiState is MyPageUiState.LoggedOut) onLogout()
+    }
+
+    LaunchedEffect(profileEditState) {
+        if (profileEditState is ProfileEditState.Success) {
+            showEditDialog = false
+            viewModel.consumeProfileEditState()
+        }
     }
 
     Column(
@@ -85,7 +94,10 @@ fun MyPageScreen(
             }
             is MyPageUiState.Success -> {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    ProfileSection(profile = state.profile)
+                    ProfileSection(
+                        profile = state.profile,
+                        onEditClick = { showEditDialog = true }
+                    )
                     StatsSection(stats = state.stats)
                     MenuSection(
                         isLoggingOut = state.isLoggingOut,
@@ -117,10 +129,87 @@ fun MyPageScreen(
             }
         )
     }
+
+    val editingProfile = (uiState as? MyPageUiState.Success)?.profile
+    if (showEditDialog && editingProfile != null) {
+        ProfileEditDialog(
+            profile = editingProfile,
+            editState = profileEditState,
+            onDismiss = {
+                showEditDialog = false
+                viewModel.consumeProfileEditState()
+            },
+            onSave = { nickname, statusMessage ->
+                viewModel.updateProfile(nickname, statusMessage)
+            }
+        )
+    }
 }
 
 @Composable
-private fun ProfileSection(profile: UserResponse) {
+private fun ProfileEditDialog(
+    profile: UserResponse,
+    editState: ProfileEditState,
+    onDismiss: () -> Unit,
+    onSave: (nickname: String, statusMessage: String) -> Unit
+) {
+    var nickname by remember { mutableStateOf(profile.nickname) }
+    var statusMessage by remember { mutableStateOf(profile.statusMessage ?: "") }
+    val isSaving = editState is ProfileEditState.Saving
+
+    AlertDialog(
+        onDismissRequest = { if (!isSaving) onDismiss() },
+        title = { Text("프로필 수정") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = nickname,
+                    onValueChange = { nickname = it },
+                    label = { Text("닉네임") },
+                    singleLine = true,
+                    enabled = !isSaving,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = statusMessage,
+                    onValueChange = { statusMessage = it },
+                    label = { Text("상태 메시지") },
+                    singleLine = true,
+                    enabled = !isSaving,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (editState is ProfileEditState.Error) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = editState.message,
+                        color = DangerColor,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(nickname.trim(), statusMessage) },
+                enabled = !isSaving
+            ) {
+                Text(if (isSaving) "저장 중..." else "저장", color = PassPurple)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isSaving) {
+                Text("취소")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ProfileSection(
+    profile: UserResponse,
+    onEditClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -130,12 +219,24 @@ private fun ProfileSection(profile: UserResponse) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = profile.nickname,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = profile.nickname,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = "수정",
+                    fontSize = 13.sp,
+                    color = PassPurple,
+                    modifier = Modifier.clickable { onEditClick() }
+                )
+            }
             Spacer(Modifier.height(4.dp))
             Text(
                 text = profile.email,
