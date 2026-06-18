@@ -3,6 +3,7 @@ package com.example.passpoint.feature.user.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,19 +17,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.user.data.dto.response.UserResponse
 import com.example.passpoint.feature.user.data.dto.response.UserStatsResponse
 
 private val PassPurple = Color(0xFF5B4FE8)
+private val PassPurpleLight = Color(0xFFEEECFB)
 private val ScreenBg = Color(0xFFF7F7FA)
 private val CardBg = Color.White
 private val TextPrimary = Color(0xFF2B2B33)
 private val TextSecondary = Color(0xFF8E8E9A)
 private val DangerColor = Color(0xFFE05252)
+private const val NICKNAME_MAX_LENGTH = 20
+private const val STATUS_MESSAGE_MAX_LENGTH = 50
 
 @Composable
 fun MyPageScreen(
@@ -157,52 +163,116 @@ private fun ProfileEditDialog(
     var statusMessage by remember { mutableStateOf(profile.statusMessage ?: "") }
     val isSaving = editState is ProfileEditState.Saving
 
-    AlertDialog(
-        onDismissRequest = { if (!isSaving) onDismiss() },
-        title = { Text("프로필 수정") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = nickname,
-                    onValueChange = { nickname = it },
-                    label = { Text("닉네임") },
-                    singleLine = true,
-                    enabled = !isSaving,
-                    modifier = Modifier.fillMaxWidth()
-                )
+    Dialog(onDismissRequest = { if (!isSaving) onDismiss() }) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = CardBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(PassPurpleLight, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🙂", fontSize = 26.sp)
+                }
                 Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = statusMessage,
-                    onValueChange = { statusMessage = it },
-                    label = { Text("상태 메시지") },
-                    singleLine = true,
-                    enabled = !isSaving,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (editState is ProfileEditState.Error) {
-                    Spacer(Modifier.height(8.dp))
+                Text("프로필 수정", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+
+                Spacer(Modifier.height(24.dp))
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("닉네임", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondary)
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = nickname,
+                        onValueChange = { if (it.length <= NICKNAME_MAX_LENGTH) nickname = it },
+                        singleLine = true,
+                        enabled = !isSaving,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Text(
-                        text = editState.message,
-                        color = DangerColor,
-                        fontSize = 12.sp
+                        text = "${nickname.length}/$NICKNAME_MAX_LENGTH",
+                        fontSize = 11.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        textAlign = TextAlign.End
                     )
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSave(nickname.trim(), statusMessage) },
-                enabled = !isSaving
-            ) {
-                Text(if (isSaving) "저장 중..." else "저장", color = PassPurple)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("취소")
+
+                Spacer(Modifier.height(8.dp))
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("상태 메시지", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondary)
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = statusMessage,
+                        onValueChange = { if (it.length <= STATUS_MESSAGE_MAX_LENGTH) statusMessage = it },
+                        placeholder = { Text("상태 메시지를 입력해보세요", color = TextSecondary, fontSize = 13.sp) },
+                        singleLine = true,
+                        enabled = !isSaving,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = "${statusMessage.length}/$STATUS_MESSAGE_MAX_LENGTH",
+                        fontSize = 11.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        textAlign = TextAlign.End
+                    )
+                }
+
+                if (editState is ProfileEditState.Error) {
+                    Spacer(Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFEBEB), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 12.dp, vertical = 10.dp)
+                    ) {
+                        Text(editState.message, color = DangerColor, fontSize = 12.sp)
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                Button(
+                    onClick = { onSave(nickname.trim(), statusMessage) },
+                    enabled = !isSaving,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PassPurple)
+                ) {
+                    if (isSaving) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.White)
+                    } else {
+                        Text("저장", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isSaving,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("취소", color = TextSecondary)
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -350,48 +420,58 @@ private fun MenuSection(
             colors = CardDefaults.cardColors(containerColor = CardBg),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
-            Column {
-                MenuRow(label = "북마크", trailing = "›", enabled = true, onClick = onBookmarkClick)
-                Divider(color = ScreenBg)
-                MenuRow(
-                    label = if (isLoggingOut) "로그아웃 중..." else "로그아웃",
-                    trailing = null,
-                    enabled = !isLoggingOut,
-                    labelColor = DangerColor,
-                    onClick = onLogoutClick
-                )
-            }
+            MenuRow(
+                icon = "🔖",
+                title = "북마크",
+                subtitle = "저장한 질문을 모아볼 수 있어요.",
+                onClick = onBookmarkClick
+            )
         }
+
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            text = if (isLoggingOut) "로그아웃 중..." else "로그아웃",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (isLoggingOut) TextSecondary else DangerColor,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = !isLoggingOut) { onLogoutClick() }
+                .padding(vertical = 8.dp)
+        )
     }
 }
 
 @Composable
 private fun MenuRow(
-    label: String,
-    trailing: String?,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    labelColor: Color = TextPrimary
+    icon: String,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled) { onClick() }
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            fontSize = 15.sp,
-            color = if (enabled) labelColor else TextSecondary
-        )
-        if (trailing != null) {
-            Text(
-                text = trailing,
-                fontSize = 12.sp,
-                color = TextSecondary
-            )
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(PassPurpleLight, RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(icon, fontSize = 16.sp)
         }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+            Spacer(Modifier.height(2.dp))
+            Text(subtitle, fontSize = 11.sp, color = TextSecondary)
+        }
+        Text("›", fontSize = 18.sp, color = TextSecondary)
     }
 }
