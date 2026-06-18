@@ -167,7 +167,7 @@ private fun StatsSection(stats: UserStatsResponse) {
             modifier = Modifier.weight(1f),
             icon = "📝",
             value = "${stats.totalAnswered}개",
-            label = "푼 질문",
+            label = "총 답변수",
             valueColor = PassPurple
         )
         StatCard(

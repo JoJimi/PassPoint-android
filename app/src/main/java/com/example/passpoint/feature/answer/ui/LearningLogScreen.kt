@@ -39,7 +39,6 @@ private val TextPrimary = Color(0xFF2B2B33)
 private val TextSecondary = Color(0xFF8E8E9A)
 private val DoneColor = Color(0xFF5B4FE8)
 private val PendingColor = Color(0xFFE8912D)
-private val FailedColor = Color(0xFFE05252)
 
 private fun categoryKorLabel(value: String): String = when (value) {
     "CS" -> "CS"
@@ -129,6 +128,8 @@ fun LearningLogScreen(
             }
             is LearningLogUiState.Success -> {
                 val listState = rememberLazyListState()
+                // 실패한 답변은 학습 기록에 보여주지 않는다.
+                val visibleAnswers = state.answers.filterNot { it.status == "FAILED" }
 
                 LaunchedEffect(listState) {
                     snapshotFlow {
@@ -195,7 +196,7 @@ fun LearningLogScreen(
                         }
                     }
 
-                    if (state.answers.isEmpty()) {
+                    if (visibleAnswers.isEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -215,7 +216,7 @@ fun LearningLogScreen(
                             }
                         }
                     } else {
-                        items(state.answers) { answer ->
+                        items(visibleAnswers) { answer ->
                             AnswerHistoryCard(
                                 answer = answer,
                                 onClick = { onAnswerClick(answer.answerId) }
@@ -415,6 +416,7 @@ private fun AnswerHistoryCard(
 
 @Composable
 private fun ScoreBadge(status: String, score: Int?) {
+    // 실패(FAILED)는 목록에서 걸러내고 들어오므로 여기서는 DONE/처리중만 다룬다.
     when (status) {
         "DONE" -> {
             Box(
@@ -429,22 +431,6 @@ private fun ScoreBadge(status: String, score: Int?) {
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = DoneColor
-                )
-            }
-        }
-        "FAILED" -> {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFFFEBEB))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "실패",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = FailedColor
                 )
             }
         }
