@@ -35,20 +35,19 @@ import com.example.passpoint.feature.user.ui.MyPageScreen
 private val PassPurple = Color(0xFF5B4FE8)
 
 private data class BottomNavItem(
-    val route: String,       // navigate() 호출 시 쓸 경로 (인자 없는 plain path)
-    val matchRoute: String,  // 현재 라우트(destination.route, 항상 패턴)와 비교할 값
+    val route: String,
     val label: String,
     val icon: ImageVector
 )
 
 private val bottomNavItems = listOf(
-    BottomNavItem(Routes.HOME, Routes.HOME, "홈", Icons.Filled.Home),
-    BottomNavItem(Routes.QUESTION_LIST, Routes.QUESTION_LIST_PATTERN, "질문 탐색", Icons.Filled.Search),
-    BottomNavItem(Routes.LEARNING_LOG, Routes.LEARNING_LOG, "학습 기록", Icons.Filled.List),
-    BottomNavItem(Routes.MY_PAGE, Routes.MY_PAGE, "마이페이지", Icons.Filled.Person)
+    BottomNavItem(Routes.HOME, "홈", Icons.Filled.Home),
+    BottomNavItem(Routes.QUESTION_LIST, "질문 탐색", Icons.Filled.Search),
+    BottomNavItem(Routes.LEARNING_LOG, "학습 기록", Icons.Filled.List),
+    BottomNavItem(Routes.MY_PAGE, "마이페이지", Icons.Filled.Person)
 )
 
-private val bottomNavRoutes = bottomNavItems.map { it.matchRoute }.toSet()
+private val bottomNavRoutes = bottomNavItems.map { it.route }.toSet()
 
 @Composable
 fun AppNavHost() {
@@ -106,22 +105,28 @@ fun AppNavHost() {
                         navController.navigate(Routes.answerFeedback(answerId))
                     },
                     onCategoryClick = { category ->
-                        navController.navigate(Routes.questionListByCategory(category))
+                        navController.navigate(Routes.categoryQuestions(category))
                     }
                 )
             }
 
-            composable(
-                route = Routes.QUESTION_LIST_PATTERN,
-                arguments = listOf(navArgument("category") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                })
-            ) { backStackEntry ->
-                val initialCategory = backStackEntry.arguments?.getString("category")
+            composable(Routes.QUESTION_LIST) {
                 QuestionListScreen(
-                    initialCategoryValue = initialCategory,
+                    onQuestionClick = { id ->
+                        navController.navigate(Routes.questionDetail(id))
+                    }
+                )
+            }
+
+            // 홈의 카테고리 칩에서 들어가는 화면. 하단 탭이 아니라 뒤로가기로 나가는 화면이라 별도 라우트로 둔다.
+            composable(
+                route = Routes.CATEGORY_QUESTIONS,
+                arguments = listOf(navArgument("category") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category") ?: return@composable
+                QuestionListScreen(
+                    initialCategoryValue = category,
+                    onBack = { navController.popBackStack() },
                     onQuestionClick = { id ->
                         navController.navigate(Routes.questionDetail(id))
                     }
@@ -225,9 +230,9 @@ private fun AppBottomBar(currentRoute: String?, navController: NavController) {
     ) {
         bottomNavItems.forEach { item ->
             NavigationBarItem(
-                selected = currentRoute == item.matchRoute,
+                selected = currentRoute == item.route,
                 onClick = {
-                    if (currentRoute != item.matchRoute) {
+                    if (currentRoute != item.route) {
                         navController.navigate(item.route) {
                             popUpTo(Routes.HOME) { saveState = true }
                             launchSingleTop = true

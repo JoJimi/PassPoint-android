@@ -52,13 +52,24 @@ private val categories = listOf(
 @Composable
 fun QuestionListScreen(
     viewModel: QuestionListViewModel = viewModel(),
+    initialCategoryValue: String? = null,
+    onBack: (() -> Unit)? = null,
     onQuestionClick: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val bookmarkedIds by viewModel.bookmarkedIds.collectAsStateWithLifecycle()
-    var selectedCategory by remember { mutableStateOf("전체") }
-    var selectedCategoryValue by remember { mutableStateOf<String?>(null) }
+    var selectedCategory by remember {
+        mutableStateOf(categories.firstOrNull { it.second == initialCategoryValue }?.first ?: "전체")
+    }
+    var selectedCategoryValue by remember { mutableStateOf(initialCategoryValue) }
     var selectedSort by remember { mutableStateOf(SortOption.default) }
+
+    // 홈의 카테고리 칩에서 들어온 경우, 진입과 동시에 그 카테고리로 다시 검색한다.
+    LaunchedEffect(initialCategoryValue) {
+        if (initialCategoryValue != null) {
+            viewModel.search(category = initialCategoryValue, sort = selectedSort.value)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -69,11 +80,22 @@ fun QuestionListScreen(
         Spacer(Modifier.height(16.dp))
 
         // 헤더
-        Text(
-            text = "질문 목록",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (onBack != null) {
+                Text(
+                    text = "←",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onBack() }
+                )
+                Spacer(Modifier.width(12.dp))
+            }
+            Text(
+                text = "질문 목록",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 

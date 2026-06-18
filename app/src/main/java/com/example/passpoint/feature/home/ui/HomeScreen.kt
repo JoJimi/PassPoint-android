@@ -3,6 +3,8 @@ package com.example.passpoint.feature.home.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -32,7 +34,13 @@ private val homeCategories = listOf(
     Triple("💻", "CS", "CS"),
     Triple("☕", "언어 (Java)", "LANGUAGE"),
     Triple("🌱", "Spring", "SPRING"),
-    Triple("🗂", "자료구조", "DATA_STRUCTURE")
+    Triple("🗂", "자료구조", "DATA_STRUCTURE"),
+    Triple("🧮", "알고리즘", "ALGORITHM"),
+    Triple("🗄", "데이터베이스", "DATABASE"),
+    Triple("🔒", "보안", "SECURITY"),
+    Triple("🌐", "인프라", "INFRA"),
+    Triple("🏗", "아키텍처", "SW_ARCHITECTURE"),
+    Triple("🕸", "웹", "WEB")
 )
 
 @Composable
@@ -232,13 +240,9 @@ private fun CategoriesSection(
 
         Spacer(Modifier.height(10.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            homeCategories.forEach { (icon, label, value) ->
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(homeCategories) { (icon, label, value) ->
                 CategoryCard(
-                    modifier = Modifier.weight(1f),
                     icon = icon,
                     label = label,
                     onClick = { onCategoryClick(value) }
@@ -250,13 +254,12 @@ private fun CategoriesSection(
 
 @Composable
 private fun CategoryCard(
-    modifier: Modifier = Modifier,
     icon: String,
     label: String,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier.clickable { onClick() },
+        modifier = Modifier.width(76.dp).clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = CardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
