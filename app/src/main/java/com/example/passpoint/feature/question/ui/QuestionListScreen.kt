@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.question.data.dto.response.QuestionSearchResponse
+import com.example.passpoint.ui.components.NotificationBell
 
 // 시안에서 뽑은 색
 private val PassPurple = Color(0xFF5B4FE8)
@@ -80,21 +81,30 @@ fun QuestionListScreen(
         Spacer(Modifier.height(16.dp))
 
         // 헤더
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (onBack != null) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onBack != null) {
+                    Text(
+                        text = "←",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { onBack() }
+                    )
+                    Spacer(Modifier.width(12.dp))
+                }
                 Text(
-                    text = "←",
+                    text = "질문 목록",
                     fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onBack() }
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(Modifier.width(12.dp))
             }
-            Text(
-                text = "질문 목록",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (onBack == null) {
+                NotificationBell()
+            }
         }
 
         Spacer(Modifier.height(16.dp))

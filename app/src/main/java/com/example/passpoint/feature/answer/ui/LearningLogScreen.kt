@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.answer.data.dto.response.AnswerSummaryResponse
 import com.example.passpoint.feature.user.data.dto.response.UserStatsResponse
+import com.example.passpoint.ui.components.NotificationBell
 
 private val PassPurple = Color(0xFF5B4FE8)
 private val PassPurpleLight = Color(0xFFEEECFB)
@@ -70,6 +71,7 @@ fun LearningLogScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -78,6 +80,7 @@ fun LearningLogScreen(
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
+            NotificationBell()
         }
 
         when (val state = uiState) {

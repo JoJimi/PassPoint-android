@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.answer.data.dto.response.AnswerSummaryResponse
 import com.example.passpoint.feature.user.data.dto.response.UserStatsResponse
+import com.example.passpoint.ui.components.NotificationBell
 
 private val PassPurple = Color(0xFF5B4FE8)
 private val ScreenBg = Color(0xFFF7F7FA)
@@ -77,7 +78,7 @@ fun HomeScreen(
                 fontWeight = FontWeight.Bold,
                 color = PassPurple
             )
-            Text(text = "🔔", fontSize = 18.sp)
+            NotificationBell()
         }
 
         when (val state = uiState) {
