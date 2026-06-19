@@ -4,6 +4,7 @@ import java.io.FileInputStream
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.gms.google-services")
 }
 
 val localProperties = Properties().apply {
@@ -104,6 +105,10 @@ dependencies {
 
     // 화면 이동 (Navigation Compose)
     implementation("androidx.navigation:navigation-compose:2.8.5")
+
+    // Firebase (FCM 푸시 알림)
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
