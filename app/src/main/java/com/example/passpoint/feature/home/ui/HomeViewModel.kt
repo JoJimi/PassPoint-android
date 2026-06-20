@@ -13,6 +13,10 @@ import kotlinx.coroutines.launch
 
 private const val RECENT_ANSWERS_SIZE = 3
 
+// 백엔드 기본 정렬은 최신순이 아니므로, "최근 푼 질문"이 실제 최신 답변이 되도록 명시한다.
+// 값 형식은 Spring Data Page의 sort("필드,방향")를 따른다(학습 기록의 LATEST와 동일).
+private const val RECENT_ANSWERS_SORT = "createdAt,desc"
+
 class HomeViewModel : ViewModel() {
 
     private val userRepository = UserRepository()
@@ -33,7 +37,11 @@ class HomeViewModel : ViewModel() {
                     val profileDeferred = async { userRepository.getMe() }
                     val statsDeferred = async { userRepository.getStats() }
                     val answersDeferred = async {
-                        answerRepository.getAnswerList(page = 0, size = RECENT_ANSWERS_SIZE)
+                        answerRepository.getAnswerList(
+                            sort = RECENT_ANSWERS_SORT,
+                            page = 0,
+                            size = RECENT_ANSWERS_SIZE
+                        )
                     }
                     _uiState.value = HomeUiState.Success(
                         nickname = profileDeferred.await().nickname,
