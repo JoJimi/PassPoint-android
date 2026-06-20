@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Android 13(API 33)+ 에서 알림을 표시하려면 런타임 권한이 필요하다 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -27,6 +29,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- FCM 토큰 갱신/메시지 수신 처리 서비스 -->
+        <service
+            android:name=".feature.fcm.service.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- 앱이 백그라운드일 때 수신한 notification 메시지가 사용할 기본 채널 -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="passpoint_default" />
     </application>
 
 </manifest>

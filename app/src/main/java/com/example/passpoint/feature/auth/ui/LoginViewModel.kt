@@ -13,6 +13,7 @@ import com.example.passpoint.BuildConfig
 import com.example.passpoint.core.local.TokenManager
 import com.example.passpoint.core.network.RetrofitClient
 import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
+import com.example.passpoint.feature.fcm.FcmTokenRegistrar
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,9 @@ class LoginViewModel : ViewModel() {
                 )
 
                 Log.d("LoginViewModel", "로그인 성공! accessToken = ${tokens.accessToken}")
+
+                // 로그인 전이라 보류됐던 FCM 토큰을 이제 서버에 등록한다.
+                FcmTokenRegistrar.fetchAndRegister(context.applicationContext)
 
                 _uiState.value = LoginUiState.Success
             } catch (e: Exception) {
