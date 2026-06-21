@@ -6,6 +6,8 @@ package com.example.passpoint.ui.navigation
  */
 object Routes {
     const val LOGIN = "login"
+    const val EMAIL_LOGIN = "email_login"
+    const val EMAIL_SIGNUP = "email_signup"
     const val HOME = "home"
     const val QUESTION_LIST = "questions"
     // 홈의 카테고리 칩에서 들어가는 전용 화면. 하단 탭의 QUESTION_LIST와 라우트를 분리해서

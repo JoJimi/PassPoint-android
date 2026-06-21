@@ -19,6 +19,7 @@ import com.example.passpoint.feature.fcm.FcmTokenRegistrar
 import com.example.passpoint.feature.fcm.service.MyFirebaseMessagingService
 import com.example.passpoint.ui.navigation.AppNavHost
 import com.example.passpoint.ui.theme.PassPointTheme
+import com.kakao.sdk.common.KakaoSdk
 
 class MainActivity : ComponentActivity() {
 
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         RetrofitClient.init(this)
+        KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
 
         createNotificationChannel()
         requestNotificationPermissionIfNeeded()

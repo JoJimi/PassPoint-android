@@ -43,13 +43,12 @@ private val KakaoYellow = Color(0xFFFEE500)
 
 /**
  * 로그인 화면
- * - 구글 로그인만 실제로 동작한다. 카카오/이메일/게스트는 목업 구성을 보여주기 위한 자리로,
- *   탭하면 "준비 중" 안내만 띄운다(백엔드에 해당 인증 수단이 없음).
  */
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
-    onLoginSuccess: () -> Unit = {}
+    onLoginSuccess: () -> Unit = {},
+    onNavigateToEmailLogin: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -125,9 +124,7 @@ fun LoginScreen(
             Spacer(Modifier.height(10.dp))
 
             Button(
-                onClick = {
-                    Toast.makeText(context, "카카오 로그인은 준비 중이에요.", Toast.LENGTH_SHORT).show()
-                },
+                onClick = { viewModel.loginWithKakao(context) },
                 enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -154,9 +151,7 @@ fun LoginScreen(
             Spacer(Modifier.height(18.dp))
 
             OutlinedButton(
-                onClick = {
-                    Toast.makeText(context, "이메일 로그인은 준비 중이에요.", Toast.LENGTH_SHORT).show()
-                },
+                onClick = onNavigateToEmailLogin,
                 enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -169,31 +164,6 @@ fun LoginScreen(
                 Spacer(Modifier.width(8.dp))
                 Text("이메일로 로그인", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             }
-
-            Spacer(Modifier.height(10.dp))
-
-            Button(
-                onClick = {
-                    Toast.makeText(context, "게스트 체험은 준비 중이에요.", Toast.LENGTH_SHORT).show()
-                },
-                enabled = !isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PassPurple)
-            ) {
-                Text("👤", fontSize = 14.sp)
-                Spacer(Modifier.width(8.dp))
-                Text("게스트로 시작하기", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            }
-
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "체험판으로 이용하기, 기록은 저장되지 않아요.",
-                fontSize = 11.sp,
-                color = TextSecondary
-            )
 
             if (uiState is LoginUiState.Error) {
                 Spacer(Modifier.height(14.dp))

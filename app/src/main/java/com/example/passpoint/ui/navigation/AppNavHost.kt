@@ -25,6 +25,8 @@ import com.example.passpoint.core.network.RetrofitClient
 import com.example.passpoint.feature.answer.ui.FeedbackScreen
 import com.example.passpoint.feature.answer.ui.LearningLogScreen
 import com.example.passpoint.feature.answer.ui.ProcessingScreen
+import com.example.passpoint.feature.auth.ui.EmailLoginScreen
+import com.example.passpoint.feature.auth.ui.EmailSignupScreen
 import com.example.passpoint.feature.auth.ui.LoginScreen
 import com.example.passpoint.feature.bookmark.ui.BookmarkListScreen
 import com.example.passpoint.feature.home.ui.HomeScreen
@@ -82,6 +84,33 @@ fun AppNavHost() {
             composable(Routes.LOGIN) {
                 LoginScreen(
                     onLoginSuccess = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
+                    },
+                    onNavigateToEmailLogin = {
+                        navController.navigate(Routes.EMAIL_LOGIN)
+                    }
+                )
+            }
+
+            composable(Routes.EMAIL_LOGIN) {
+                EmailLoginScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToSignup = { navController.navigate(Routes.EMAIL_SIGNUP) },
+                    onLoginSuccess = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Routes.EMAIL_SIGNUP) {
+                EmailSignupScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToLogin = { navController.popBackStack() },
+                    onSignupSuccess = {
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }

@@ -10,16 +10,24 @@ import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.passpoint.BuildConfig
-import com.example.passpoint.core.local.TokenManager
 import com.example.passpoint.core.network.RetrofitClient
+import com.example.passpoint.core.network.toUserMessage
+import com.example.passpoint.feature.auth.data.completeLogin
+import com.example.passpoint.feature.auth.data.dto.request.KakaoLoginRequest
 import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
-import com.example.passpoint.feature.fcm.FcmTokenRegistrar
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.kakao.sdk.auth.model.OAuthToken
+import com.kakao.sdk.common.model.ClientError
+import com.kakao.sdk.common.model.ClientErrorCause
+import com.kakao.sdk.user.UserApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class LoginViewModel : ViewModel() {
 
@@ -44,24 +52,70 @@ class LoginViewModel : ViewModel() {
                     LoginRequest(idToken = idToken)
                 )
 
-                // 3) 받은 tokens 저장 (DataStore에 영구 저장)
-                TokenManager(context).saveTokens(
-                    accessToken = tokens.accessToken,
-                    refreshToken = tokens.refreshToken
-                )
-
+                completeLogin(context, tokens)
                 Log.d("LoginViewModel", "로그인 성공! accessToken = ${tokens.accessToken}")
-
-                // 로그인 전이라 보류됐던 FCM 토큰을 이제 서버에 등록한다.
-                FcmTokenRegistrar.fetchAndRegister(context.applicationContext)
-
                 _uiState.value = LoginUiState.Success
             } catch (e: Exception) {
                 Log.e("LoginViewModel", "Google login failed", e)
-                _uiState.value = LoginUiState.Error(e.message ?: "로그인 실패")
+                _uiState.value = LoginUiState.Error(e.toUserMessage("로그인에 실패했어요."))
             }
         }
     }
+
+    /**
+     * 카카오 로그인 시작.
+     * 카카오톡 앱이 있으면 그 앱으로, 없으면 카카오 계정(웹)으로 로그인한다.
+     */
+    fun loginWithKakao(context: Context) {
+        viewModelScope.launch {
+            _uiState.value = LoginUiState.Loading
+            try {
+                val accessToken = getKakaoAccessToken(context)
+                val tokens = RetrofitClient.authApi.loginWithKakao(
+                    KakaoLoginRequest(accessToken = accessToken)
+                )
+                completeLogin(context, tokens)
+                _uiState.value = LoginUiState.Success
+            } catch (e: KakaoLoginCancelledException) {
+                // 사용자가 의도적으로 취소한 경우라 에러로 보여주지 않는다.
+                _uiState.value = LoginUiState.Idle
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Kakao login failed", e)
+                _uiState.value = LoginUiState.Error(e.toUserMessage("카카오 로그인에 실패했어요."))
+            }
+        }
+    }
+
+    private class KakaoLoginCancelledException : Exception()
+
+    /**
+     * 카카오 SDK의 콜백 기반 로그인 API를 코루틴으로 감싼다.
+     * 카카오톡 로그인이 안 되면(미설치 등) 카카오 계정 로그인으로 폴백한다.
+     */
+    private suspend fun getKakaoAccessToken(context: Context): String =
+        suspendCancellableCoroutine { cont ->
+            val accountCallback = { token: OAuthToken?, error: Throwable? ->
+                when {
+                    token != null -> cont.resume(token.accessToken)
+                    error is ClientError && error.reason == ClientErrorCause.Cancelled ->
+                        cont.resumeWithException(KakaoLoginCancelledException())
+                    else -> cont.resumeWithException(error ?: IllegalStateException("카카오 로그인에 실패했어요."))
+                }
+            }
+
+            if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
+                UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
+                    when {
+                        token != null -> cont.resume(token.accessToken)
+                        error is ClientError && error.reason == ClientErrorCause.Cancelled ->
+                            cont.resumeWithException(KakaoLoginCancelledException())
+                        else -> UserApiClient.instance.loginWithKakaoAccount(context, callback = accountCallback)
+                    }
+                }
+            } else {
+                UserApiClient.instance.loginWithKakaoAccount(context, callback = accountCallback)
+            }
+        }
 
     /**
      * Credential Manager를 띄워 구글 ID Token 문자열을 받아온다.

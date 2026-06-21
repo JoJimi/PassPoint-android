@@ -39,6 +39,11 @@ android {
             "BASE_URL",
             "\"${localProperties.getProperty("BASE_URL")}\""
         )
+
+        val kakaoNativeAppKey = localProperties.getProperty("KAKAO_NATIVE_APP_KEY") ?: ""
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
+        // 카카오 로그인 리다이렉트 스킴(kakao{NATIVE_APP_KEY}://oauth)에 쓰인다 (AndroidManifest.xml 참고)
+        manifestPlaceholders["kakaoNativeAppKey"] = kakaoNativeAppKey
     }
 
     buildTypes {
@@ -86,6 +91,9 @@ dependencies {
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // 카카오 로그인
+    implementation("com.kakao.sdk:v2-user:2.20.6")
 
     // 백엔드 통신 (Retrofit)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

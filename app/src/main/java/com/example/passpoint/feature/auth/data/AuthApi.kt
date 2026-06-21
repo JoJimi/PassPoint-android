@@ -1,5 +1,8 @@
 package com.example.passpoint.feature.auth.data
 
+import com.example.passpoint.feature.auth.data.dto.request.EmailLoginRequest
+import com.example.passpoint.feature.auth.data.dto.request.EmailSignupRequest
+import com.example.passpoint.feature.auth.data.dto.request.KakaoLoginRequest
 import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
 import com.example.passpoint.feature.auth.data.dto.request.RefreshRequest
 import com.example.passpoint.feature.auth.data.dto.response.TokenResponse
@@ -16,6 +19,36 @@ interface AuthApi {
     @POST("api/v1/auth/login/google")
     suspend fun loginWithGoogle(
         @Body request: LoginRequest
+    ): TokenResponse
+
+    /**
+     * 소셜 로그인
+     * POST /api/v1/auth/login/kakao
+     * 카카오 SDK가 발급한 액세스 토큰을 보내면 백엔드가 카카오 서버에 검증 후 우리 서비스용 토큰을 발급한다.
+     * 최초 호출 시 자동 가입 + 로그인이 함께 처리된다.
+     */
+    @POST("api/v1/auth/login/kakao")
+    suspend fun loginWithKakao(
+        @Body request: KakaoLoginRequest
+    ): TokenResponse
+
+    /**
+     * 이메일 회원가입
+     * POST /api/v1/auth/signup/email
+     * 가입 성공 시 토큰까지 즉시 발급된다.
+     */
+    @POST("api/v1/auth/signup/email")
+    suspend fun signupEmail(
+        @Body request: EmailSignupRequest
+    ): TokenResponse
+
+    /**
+     * 이메일 로그인
+     * POST /api/v1/auth/login/email
+     */
+    @POST("api/v1/auth/login/email")
+    suspend fun loginEmail(
+        @Body request: EmailLoginRequest
     ): TokenResponse
 
     /**
