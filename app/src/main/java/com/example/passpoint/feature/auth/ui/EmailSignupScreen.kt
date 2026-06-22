@@ -1,5 +1,6 @@
 package com.example.passpoint.feature.auth.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -51,6 +52,7 @@ fun EmailSignupScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
+            Toast.makeText(context, "회원가입이 완료됐어요. 로그인해주세요.", Toast.LENGTH_SHORT).show()
             onSignupSuccess()
         }
     }
@@ -135,7 +137,7 @@ fun EmailSignupScreen(
 
             Button(
                 onClick = {
-                    viewModel.signupWithEmail(context, email.trim(), password, nickname.trim())
+                    viewModel.signupWithEmail(email.trim(), password, nickname.trim())
                 },
                 enabled = !isLoading && email.isNotBlank() && password.isNotBlank() && nickname.isNotBlank(),
                 modifier = Modifier

@@ -111,9 +111,8 @@ fun AppNavHost() {
                     onBack = { navController.popBackStack() },
                     onNavigateToLogin = { navController.popBackStack() },
                     onSignupSuccess = {
-                        navController.navigate(Routes.HOME) {
-                            popUpTo(Routes.LOGIN) { inclusive = true }
-                        }
+                        // 가입 직후 자동 로그인하지 않고, 가입 화면 진입 전 이메일 로그인 화면으로 돌려보내 재로그인을 받는다.
+                        navController.popBackStack()
                     }
                 )
             }

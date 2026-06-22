@@ -45,7 +45,7 @@ class EmailAuthViewModel : ViewModel() {
         }
     }
 
-    fun signupWithEmail(context: Context, email: String, password: String, nickname: String) {
+    fun signupWithEmail(email: String, password: String, nickname: String) {
         val validationError = validate(email, password, nickname)
         if (validationError != null) {
             _uiState.value = LoginUiState.Error(validationError)
@@ -55,10 +55,11 @@ class EmailAuthViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
             try {
-                val tokens = RetrofitClient.authApi.signupEmail(
+                // 가입 응답에 토큰이 같이 오지만 저장하지 않는다 — 가입 직후 자동 로그인 대신
+                // 사용자가 입력한 자격증명으로 로그인 화면에서 직접 재로그인하게 한다.
+                RetrofitClient.authApi.signupEmail(
                     EmailSignupRequest(email = email, password = password, nickname = nickname)
                 )
-                completeLogin(context, tokens)
                 _uiState.value = LoginUiState.Success
             } catch (e: Exception) {
                 Log.e("EmailAuthViewModel", "Email signup failed", e)
