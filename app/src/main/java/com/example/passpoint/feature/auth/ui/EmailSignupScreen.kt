@@ -48,7 +48,11 @@ fun EmailSignupScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPassword by remember { mutableStateOf("") }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var nickname by remember { mutableStateOf("") }
+
+    val passwordMismatch = confirmPassword.isNotEmpty() && password != confirmPassword
 
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
@@ -115,6 +119,39 @@ fun EmailSignupScreen(
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("비밀번호 확인") },
+                singleLine = true,
+                enabled = !isLoading,
+                isError = passwordMismatch,
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    Text(
+                        text = if (confirmPasswordVisible) "🙈" else "👁",
+                        fontSize = 16.sp,
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .clickable(enabled = !isLoading) { confirmPasswordVisible = !confirmPasswordVisible }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            if (passwordMismatch) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "비밀번호가 일치하지 않아요.",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
                 value = nickname,
                 onValueChange = { nickname = it },
                 label = { Text("닉네임 (1~20자)") },
@@ -137,9 +174,10 @@ fun EmailSignupScreen(
 
             Button(
                 onClick = {
-                    viewModel.signupWithEmail(email.trim(), password, nickname.trim())
+                    viewModel.signupWithEmail(email.trim(), password, confirmPassword, nickname.trim())
                 },
-                enabled = !isLoading && email.isNotBlank() && password.isNotBlank() && nickname.isNotBlank(),
+                enabled = !isLoading && email.isNotBlank() && password.isNotBlank() &&
+                    confirmPassword.isNotBlank() && !passwordMismatch && nickname.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

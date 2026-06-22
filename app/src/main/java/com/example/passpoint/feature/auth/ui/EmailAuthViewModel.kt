@@ -45,8 +45,8 @@ class EmailAuthViewModel : ViewModel() {
         }
     }
 
-    fun signupWithEmail(email: String, password: String, nickname: String) {
-        val validationError = validate(email, password, nickname)
+    fun signupWithEmail(email: String, password: String, confirmPassword: String, nickname: String) {
+        val validationError = validate(email, password, confirmPassword, nickname)
         if (validationError != null) {
             _uiState.value = LoginUiState.Error(validationError)
             return
@@ -69,9 +69,10 @@ class EmailAuthViewModel : ViewModel() {
     }
 
     // 서버 왕복 없이 바로 알 수 있는 형식 오류는 미리 걸러서 보여준다 (명세서 3번 항목의 길이 제약과 동일).
-    private fun validate(email: String, password: String, nickname: String): String? = when {
+    private fun validate(email: String, password: String, confirmPassword: String, nickname: String): String? = when {
         !EMAIL_REGEX.matches(email) -> "올바른 이메일 형식이 아니에요."
         password.length !in 8..64 -> "비밀번호는 8~64자로 입력해주세요."
+        password != confirmPassword -> "비밀번호가 일치하지 않아요."
         nickname.isBlank() || nickname.length > 20 -> "닉네임은 1~20자로 입력해주세요."
         else -> null
     }
