@@ -29,15 +29,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.answer.ui.AnswerSubmitState
 import com.example.passpoint.feature.answer.ui.RecordingState
+import com.example.passpoint.core.util.categoryLabel
 import com.example.passpoint.feature.question.data.dto.response.QuestionDetailResponse
-
-// 시안에서 뽑은 색
-private val PassPurple = Color(0xFF5B4FE8)
-private val PassPurpleLight = Color(0xFFEEECFB)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val TagBg = Color(0xFFF1F1F5)
-private val TagText = Color(0xFF8E8E9A)
-private val BorderColor = Color(0xFFE3E3EA)
+import com.example.passpoint.ui.theme.BorderColor
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.PassPurpleLight
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TagBg
+import com.example.passpoint.ui.theme.TagText
 
 private const val ANSWER_MAX_LENGTH = 3000
 
@@ -52,9 +51,6 @@ private fun difficultyLabel(value: String): String = when (value) {
     "HARD" -> "어려움"
     else -> value
 }
-
-private fun categoryLabel(value: String): String =
-    value.split("_").joinToString(" ") { it.lowercase().replaceFirstChar(Char::uppercase) }
 
 private fun formatRecordingTime(seconds: Int): String {
     val m = seconds / 60
@@ -574,7 +570,7 @@ private fun TextAnswerInput(text: String, onTextChange: (String) -> Unit) {
                 .fillMaxWidth()
                 .height(160.dp),
             placeholder = { Text("텍스트로 답변해주세요...", color = TagText) },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
+            colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = PassPurple,
                 unfocusedBorderColor = BorderColor
             )

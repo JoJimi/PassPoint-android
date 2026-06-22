@@ -31,14 +31,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.passpoint.ui.theme.BorderColor
 import com.example.passpoint.ui.theme.PassPointTheme
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TextPrimary
+import com.example.passpoint.ui.theme.TextSecondary
 
-private val PassPurple = Color(0xFF5B4FE8)
-private val PassPurpleLight = Color(0xFF8B7FF5)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val TextPrimary = Color(0xFF2B2B33)
-private val TextSecondary = Color(0xFF8E8E9A)
-private val BorderColor = Color(0xFFE3E3EA)
+// 로고 그라데이션 전용 색상 (공용 PassPurpleLight와 값이 달라 별도로 둔다)
+private val LogoGradientLight = Color(0xFF8B7FF5)
 private val KakaoYellow = Color(0xFFFEE500)
 
 /**
@@ -229,7 +230,7 @@ private fun AppLogo() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    brush = Brush.linearGradient(listOf(PassPurpleLight, PassPurple)),
+                    brush = Brush.linearGradient(listOf(LogoGradientLight, PassPurple)),
                     shape = RoundedCornerShape(24.dp)
                 )
         )

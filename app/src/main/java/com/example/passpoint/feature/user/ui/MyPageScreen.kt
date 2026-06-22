@@ -26,13 +26,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.user.data.dto.response.UserResponse
 import com.example.passpoint.feature.user.data.dto.response.UserStatsResponse
 import com.example.passpoint.ui.components.NotificationBell
+import com.example.passpoint.ui.theme.CardBg
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.PassPurpleLight
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TextPrimary
+import com.example.passpoint.ui.theme.TextSecondary
 
-private val PassPurple = Color(0xFF5B4FE8)
-private val PassPurpleLight = Color(0xFFEEECFB)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val CardBg = Color.White
-private val TextPrimary = Color(0xFF2B2B33)
-private val TextSecondary = Color(0xFF8E8E9A)
 private val DangerColor = Color(0xFFE05252)
 private const val NICKNAME_MAX_LENGTH = 20
 private const val STATUS_MESSAGE_MAX_LENGTH = 50

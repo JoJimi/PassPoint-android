@@ -22,28 +22,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.passpoint.core.util.categoryKorLabel
 import com.example.passpoint.feature.bookmark.data.dto.response.BookmarkSummaryResponse
-
-private val PassPurple = Color(0xFF5B4FE8)
-private val PassPurpleLight = Color(0xFFEEECFB)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val CardBg = Color.White
-private val TextPrimary = Color(0xFF2B2B33)
-private val TextSecondary = Color(0xFF8E8E9A)
-
-private fun categoryKorLabel(value: String): String = when (value) {
-    "CS" -> "CS"
-    "LANGUAGE" -> "언어"
-    "SPRING" -> "Spring"
-    "DATA_STRUCTURE" -> "자료구조"
-    "ALGORITHM" -> "알고리즘"
-    "DATABASE" -> "데이터베이스"
-    "SECURITY" -> "보안"
-    "INFRA" -> "인프라"
-    "SW_ARCHITECTURE" -> "아키텍처"
-    "WEB" -> "웹"
-    else -> value
-}
+import com.example.passpoint.ui.theme.CardBg
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.PassPurpleLight
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TextPrimary
+import com.example.passpoint.ui.theme.TextSecondary
 
 private fun formatDate(bookmarkedAt: String): String =
     bookmarkedAt.take(10).replace("-", ".")

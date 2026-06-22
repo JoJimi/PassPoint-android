@@ -26,33 +26,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.passpoint.core.util.categoryKorLabel
 import com.example.passpoint.feature.answer.data.dto.response.AnswerSummaryResponse
 import com.example.passpoint.feature.user.data.dto.response.UserStatsResponse
 import com.example.passpoint.ui.components.NotificationBell
+import com.example.passpoint.ui.theme.CardBg
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.PassPurpleLight
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TagText
+import com.example.passpoint.ui.theme.TextPrimary
+import com.example.passpoint.ui.theme.TextSecondary
 
-private val PassPurple = Color(0xFF5B4FE8)
-private val PassPurpleLight = Color(0xFFEEECFB)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val CardBg = Color.White
-private val TagText = Color(0xFF8E8E9A)
-private val TextPrimary = Color(0xFF2B2B33)
-private val TextSecondary = Color(0xFF8E8E9A)
-private val DoneColor = Color(0xFF5B4FE8)
 private val PendingColor = Color(0xFFE8912D)
-
-private fun categoryKorLabel(value: String): String = when (value) {
-    "CS" -> "CS"
-    "LANGUAGE" -> "언어"
-    "SPRING" -> "Spring"
-    "DATA_STRUCTURE" -> "자료구조"
-    "ALGORITHM" -> "알고리즘"
-    "DATABASE" -> "데이터베이스"
-    "SECURITY" -> "보안"
-    "INFRA" -> "인프라"
-    "SW_ARCHITECTURE" -> "아키텍처"
-    "WEB" -> "웹"
-    else -> value
-}
 
 // 카테고리 필터 칩 목록 (전체 + 주요 카테고리). 서버가 category 파라미터를 지원 안 해서
 // 이미 불러온 답변 목록을 클라이언트에서 필터링하는 용도로 쓴다.
@@ -470,7 +456,7 @@ private fun ScoreBadge(status: String, score: Int?) {
                     text = "${score ?: 0}점",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = DoneColor
+                    color = PassPurple
                 )
             }
         }

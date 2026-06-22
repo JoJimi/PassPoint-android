@@ -22,17 +22,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-private val PassPurple = Color(0xFF5B4FE8)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val TextPrimary = Color(0xFF2B2B33)
-private val TextSecondary = Color(0xFF8E8E9A)
+import com.example.passpoint.ui.components.PasswordTextField
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TextPrimary
+import com.example.passpoint.ui.theme.TextSecondary
 
 @Composable
 fun EmailSignupScreen(
@@ -47,9 +45,7 @@ fun EmailSignupScreen(
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
     var confirmPassword by remember { mutableStateOf("") }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var nickname by remember { mutableStateOf("") }
 
     val passwordMismatch = confirmPassword.isNotEmpty() && password != confirmPassword
@@ -95,49 +91,23 @@ fun EmailSignupScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
+            PasswordTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("비밀번호 (8~64자)") },
-                singleLine = true,
+                label = "비밀번호 (8~64자)",
                 enabled = !isLoading,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    Text(
-                        text = if (passwordVisible) "🙈" else "👁",
-                        fontSize = 16.sp,
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .clickable(enabled = !isLoading) { passwordVisible = !passwordVisible }
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
+            PasswordTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text("비밀번호 확인") },
-                singleLine = true,
+                label = "비밀번호 확인",
                 enabled = !isLoading,
                 isError = passwordMismatch,
-                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    Text(
-                        text = if (confirmPasswordVisible) "🙈" else "👁",
-                        fontSize = 16.sp,
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .clickable(enabled = !isLoading) { confirmPasswordVisible = !confirmPasswordVisible }
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier.fillMaxWidth()
             )
 
             if (passwordMismatch) {

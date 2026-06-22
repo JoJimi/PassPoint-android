@@ -27,13 +27,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.question.data.dto.response.QuestionSearchResponse
 import com.example.passpoint.ui.components.NotificationBell
-
-// 시안에서 뽑은 색
-private val PassPurple = Color(0xFF5B4FE8)
-private val PassPurpleLight = Color(0xFFEEECFB)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val TagBg = Color(0xFFF1F1F5)
-private val TagText = Color(0xFF8E8E9A)
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.PassPurpleLight
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TagBg
+import com.example.passpoint.ui.theme.TagText
 
 // 카테고리 필터 칩 목록 (전체 + 주요 카테고리)
 private val categories = listOf(

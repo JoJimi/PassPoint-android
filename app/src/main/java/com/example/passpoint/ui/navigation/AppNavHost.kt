@@ -32,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.passpoint.core.network.RetrofitClient
+import com.example.passpoint.ui.theme.PassPurple
 import com.example.passpoint.feature.answer.ui.FeedbackScreen
 import com.example.passpoint.feature.answer.ui.LearningLogScreen
 import com.example.passpoint.feature.answer.ui.ProcessingScreen
@@ -43,8 +44,6 @@ import com.example.passpoint.feature.home.ui.HomeScreen
 import com.example.passpoint.feature.question.ui.QuestionDetailScreen
 import com.example.passpoint.feature.question.ui.QuestionListScreen
 import com.example.passpoint.feature.user.ui.MyPageScreen
-
-private val PassPurple = Color(0xFF5B4FE8)
 
 private data class BottomNavItem(
     val route: String,

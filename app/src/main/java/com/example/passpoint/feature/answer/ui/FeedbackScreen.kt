@@ -32,22 +32,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.answer.data.dto.response.AnswerDetailResponse
 import com.example.passpoint.feature.answer.data.dto.response.FeedbackResponse
+import com.example.passpoint.core.util.categoryLabel
 import com.example.passpoint.feature.answer.data.dto.response.QuestionInfo
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.PassPurpleLight
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TagBg
+import com.example.passpoint.ui.theme.TagText
 
 // 시안에서 뽑은 색
-private val PassPurple = Color(0xFF5B4FE8)
-private val PassPurpleLight = Color(0xFFEEECFB)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val TagBg = Color(0xFFF1F1F5)
-private val TagText = Color(0xFF8E8E9A)
 private val GoodColor = Color(0xFF2E9E5B)
 private val GoodBg = Color(0xFFE6F4EA)
 private val ImproveColor = Color(0xFFE8912D)
 private val ImproveBg = Color(0xFFFFF3E0)
-
-// ENUM 형태 카테고리 값을 보기 좋은 라벨로 변환 (예: SPRING_CORE -> Spring Core)
-private fun categoryLabel(value: String): String =
-    value.split("_").joinToString(" ") { it.lowercase().replaceFirstChar(Char::uppercase) }
 
 @Composable
 fun FeedbackScreen(

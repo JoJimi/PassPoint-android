@@ -24,12 +24,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.passpoint.feature.answer.data.dto.response.AnswerSummaryResponse
 import com.example.passpoint.feature.user.data.dto.response.UserStatsResponse
 import com.example.passpoint.ui.components.NotificationBell
-
-private val PassPurple = Color(0xFF5B4FE8)
-private val ScreenBg = Color(0xFFF7F7FA)
-private val CardBg = Color.White
-private val TextPrimary = Color(0xFF2B2B33)
-private val TextSecondary = Color(0xFF8E8E9A)
+import com.example.passpoint.ui.theme.CardBg
+import com.example.passpoint.ui.theme.PassPurple
+import com.example.passpoint.ui.theme.ScreenBg
+import com.example.passpoint.ui.theme.TextPrimary
+import com.example.passpoint.ui.theme.TextSecondary
 
 // 홈에서 바로 보여줄 카테고리 바로가기 (아이콘, 표시 라벨, API에 보낼 값)
 private val homeCategories = listOf(
