@@ -1,5 +1,13 @@
 package com.example.passpoint.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -13,7 +21,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -51,6 +61,38 @@ private val bottomNavItems = listOf(
 
 private val bottomNavRoutes = bottomNavItems.map { it.route }.toSet()
 
+private fun navigateToTab(navController: NavController, route: String) {
+    navController.navigate(route) {
+        popUpTo(Routes.HOME) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+private fun tabIndexOf(route: String?): Int = bottomNavItems.indexOfFirst { it.route == route }
+
+// 하단 탭끼리 이동할 때 탭 순서에 맞춰 옆으로 슬라이드되도록 방향을 계산한다.
+// 탭이 아닌 화면으로 이동할 때는 그냥 페이드 처리한다.
+private val tabEnterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+    val from = tabIndexOf(initialState.destination.route)
+    val to = tabIndexOf(targetState.destination.route)
+    when {
+        from == -1 || to == -1 || from == to -> fadeIn()
+        to > from -> slideInHorizontally(initialOffsetX = { it })
+        else -> slideInHorizontally(initialOffsetX = { -it })
+    }
+}
+
+private val tabExitTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+    val from = tabIndexOf(initialState.destination.route)
+    val to = tabIndexOf(targetState.destination.route)
+    when {
+        from == -1 || to == -1 || from == to -> fadeOut()
+        to > from -> slideOutHorizontally(targetOffsetX = { -it })
+        else -> slideOutHorizontally(targetOffsetX = { it })
+    }
+}
+
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
@@ -79,7 +121,31 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             startDestination = Routes.LOGIN,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier
+                .padding(paddingValues)
+                .let { base ->
+                    if (currentRoute !in bottomNavRoutes) return@let base
+                    base.pointerInput(currentRoute) {
+                        val currentIndex = tabIndexOf(currentRoute)
+                        var dragAmount = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { dragAmount = 0f },
+                            onHorizontalDrag = { change, delta ->
+                                dragAmount += delta
+                                change.consume()
+                            },
+                            onDragEnd = {
+                                val threshold = size.width / 4f
+                                when {
+                                    dragAmount <= -threshold && currentIndex < bottomNavItems.lastIndex ->
+                                        navigateToTab(navController, bottomNavItems[currentIndex + 1].route)
+                                    dragAmount >= threshold && currentIndex > 0 ->
+                                        navigateToTab(navController, bottomNavItems[currentIndex - 1].route)
+                                }
+                            }
+                        )
+                    }
+                }
         ) {
             composable(Routes.LOGIN) {
                 LoginScreen(
@@ -117,7 +183,13 @@ fun AppNavHost() {
                 )
             }
 
-            composable(Routes.HOME) {
+            composable(
+                Routes.HOME,
+                enterTransition = tabEnterTransition,
+                exitTransition = tabExitTransition,
+                popEnterTransition = tabEnterTransition,
+                popExitTransition = tabExitTransition
+            ) {
                 HomeScreen(
                     onGoToQuestions = {
                         navController.navigate(Routes.QUESTION_LIST)
@@ -138,7 +210,13 @@ fun AppNavHost() {
                 )
             }
 
-            composable(Routes.QUESTION_LIST) {
+            composable(
+                Routes.QUESTION_LIST,
+                enterTransition = tabEnterTransition,
+                exitTransition = tabExitTransition,
+                popEnterTransition = tabEnterTransition,
+                popExitTransition = tabExitTransition
+            ) {
                 QuestionListScreen(
                     onQuestionClick = { id ->
                         navController.navigate(Routes.questionDetail(id))
@@ -215,7 +293,13 @@ fun AppNavHost() {
             }
 
             // F10: 학습 기록 화면
-            composable(Routes.LEARNING_LOG) {
+            composable(
+                Routes.LEARNING_LOG,
+                enterTransition = tabEnterTransition,
+                exitTransition = tabExitTransition,
+                popEnterTransition = tabEnterTransition,
+                popExitTransition = tabExitTransition
+            ) {
                 LearningLogScreen(
                     onAnswerClick = { answerId ->
                         navController.navigate(Routes.answerFeedback(answerId))
@@ -224,7 +308,13 @@ fun AppNavHost() {
             }
 
             // F11: 마이페이지
-            composable(Routes.MY_PAGE) {
+            composable(
+                Routes.MY_PAGE,
+                enterTransition = tabEnterTransition,
+                exitTransition = tabExitTransition,
+                popEnterTransition = tabEnterTransition,
+                popExitTransition = tabExitTransition
+            ) {
                 MyPageScreen(
                     onLogout = {
                         navController.navigate(Routes.LOGIN) {
@@ -261,11 +351,7 @@ private fun AppBottomBar(currentRoute: String?, navController: NavController) {
                 selected = currentRoute == item.route,
                 onClick = {
                     if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo(Routes.HOME) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        navigateToTab(navController, item.route)
                     }
                 },
                 icon = {
