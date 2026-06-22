@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.passpoint.BuildConfig
 import com.example.passpoint.core.network.RetrofitClient
-import com.example.passpoint.core.network.toUserMessage
+import com.example.passpoint.core.network.toSocialLoginErrorMessage
 import com.example.passpoint.feature.auth.data.completeLogin
 import com.example.passpoint.feature.auth.data.dto.request.KakaoLoginRequest
 import com.example.passpoint.feature.auth.data.dto.request.LoginRequest
@@ -57,7 +57,7 @@ class LoginViewModel : ViewModel() {
                 _uiState.value = LoginUiState.Success
             } catch (e: Exception) {
                 Log.e("LoginViewModel", "Google login failed", e)
-                _uiState.value = LoginUiState.Error(e.toUserMessage("로그인에 실패했어요."))
+                _uiState.value = LoginUiState.Error(e.toSocialLoginErrorMessage("로그인에 실패했어요."))
             }
         }
     }
@@ -81,7 +81,7 @@ class LoginViewModel : ViewModel() {
                 _uiState.value = LoginUiState.Idle
             } catch (e: Exception) {
                 Log.e("LoginViewModel", "Kakao login failed", e)
-                _uiState.value = LoginUiState.Error(e.toUserMessage("카카오 로그인에 실패했어요."))
+                _uiState.value = LoginUiState.Error(e.toSocialLoginErrorMessage("카카오 로그인에 실패했어요."))
             }
         }
     }
